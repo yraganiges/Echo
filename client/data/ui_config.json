@@ -1,0 +1,15 @@
+{
+    "title": "Escord",
+    "window_color": "gray7",
+    "fg_color": "white",
+    "main_color": "#2c0661",
+    "theme": "custom",
+
+    "fonts": [
+        "Cascadia Mono SemiBold",
+        "Bahnschrift Light",
+        "Cascadia Mono Light",
+        "Candara Light",
+        "Arial Black"
+    ]
+}
