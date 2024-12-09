@@ -70,6 +70,7 @@ class App(object):
         ).get()
         self.btn_enter_account.place(relx = 0.5, rely = 0.7, anchor = CENTER)
         
+        
         #text_sign_up
         self.txt_sign_up = Label(
             self.root,

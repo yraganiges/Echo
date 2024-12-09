@@ -5,7 +5,7 @@ from tkinter import (
 )
 
 from ui_components.Buttons import Default_Button, Rounded_Button
-from ui_components.Entry import Default_Entry
+from ui_components.Entry import GameDes_Entry
 from ui_components.Labels import Top_Field, Text
 
 from config import ui_config
@@ -50,25 +50,27 @@ class App(object):
         self.welcome_text.place(relx = 0.5, rely = 0.17, anchor = CENTER)
         
         #mail
-        self.entry_mail = Default_Entry(
+        self.entry_mail = GameDes_Entry(
             self.root,
-            text = "Почта"
+            text = "Почта:",
+            bg_2 = "gray7"
         )
         self.entry_mail.show(relx = 0.5, rely = 0.3, anchor = CENTER)
         
         #password
-        self.entry_password = Default_Entry(
+        self.entry_password = GameDes_Entry(
             self.root,
-            text = "Пароль"
+            text = "Пароль:",
+            bg_2 = "gray7"
         )
-        self.entry_password.show(relx = 0.5, rely = 0.45, anchor = CENTER)
+        self.entry_password.show(relx = 0.5, rely = 0.55, anchor = CENTER)
         
         #button registation
         self.btn_enter_account = Default_Button(
             self.root,
             text = "Войти в аккаунт"
         ).get()
-        self.btn_enter_account.place(relx = 0.5, rely = 0.7, anchor = CENTER)
+        self.btn_enter_account.place(relx = 0.5, rely = 0.75, anchor = CENTER)
         
         #text_sign_up
         self.txt_sign_up = Label(
