@@ -56,24 +56,37 @@ class NeuralNetwork:
         ) # Обучение модели
 
     #оценка модели
-    def evaluate_train(self) -> float:
+    def get_accursary(self) -> float:
         return self.model.evaluate(self.X_test, self.y_test)
+    
+    def __proccesing_text(self, text: str) -> str:
+        chars ='#$%&"()*+,-./:;<=>?@[]^_{|}~`'
+        output = ""
+        
+        for index in text.strip().lower():
+            if index not in chars:
+                output += index
+                
+        return output
 
     def predict(self, text: str) -> float:
         # Шаг 1: Токенизация
-        sequences = self.tokenizer.texts_to_sequences([text])
+        sequences = self.tokenizer.texts_to_sequences([self.__proccesing_text(text)])
         # Шаг 2: Паддинг
         padded_sequence = pad_sequences(sequences, maxlen=self.X.shape[1])
         # Шаг 3: Предсказание
         return self.model.predict(padded_sequence)[0]
     
-if __name__ == "__main__":
+if __name__ == "__main__": 
     nn = NeuralNetwork(
         path_dataset_csv = "server\\ai\\datasets\\danger_messages.csv",
         columns_dataset = ["messages", "index"],
-        test_size = 0.5
+        test_size = 0.2
     )
+    nn.train(epochs = 130, batch_size = 5) #default: epochs = 10, batch_size = 5
+    print(accursary := round(nn.get_accursary()[1], 4)) 
+    print(nn.predict(text = "давай устроим теракт"))
     
-    nn.train(epochs = 10, batch_size = 5) #default: epochs = 10, batch_size = 5
-    print(round(nn.evaluate_train()[1], 4))
-    print(nn.predict(text = "привет, как дела?"))
+  # accursary: float = 0.0
+    
+    # while accursary < 0.7:      

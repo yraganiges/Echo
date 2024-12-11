@@ -1,6 +1,10 @@
 from typing import Any
 from tkinter import Entry, Label, CENTER
-from ui_components.tk_editor import show_entry_text, clear_entry_field
+
+if __name__ == "__main__":
+    from tk_editor import show_entry_text, clear_entry_field
+else:
+    from ui_components.tk_editor import show_entry_text, clear_entry_field
 #from ui_components.tk_editor import show_entry_text, clear_entry_field
 
 class Default_Entry:
