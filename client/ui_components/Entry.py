@@ -145,11 +145,25 @@ class GameDes_Entry:
             show_entry_text(body = self.gamedes_entry, text = text)
         ))
         
-    def show(self, relx: float = 0.0, rely: float = 0.0, anchor: Any = CENTER) -> None:
-            self.gamedes_entry.place(relx = relx - 0.01, rely = rely - 0.04, anchor = anchor)
-            self.background_field.place(relx = relx, rely = rely, anchor = anchor)
-            self.foreground_field.place(relx = relx + 0.05, rely = rely + 0.05, anchor = anchor)
-            self.lbl.place(relx = relx - 0.4, rely = rely - 0.01)
+        self.entry_text = text
+        
+    def get(self) -> Entry:
+        return self.gamedes_entry
+    
+    def get_entry_text(self) -> str:
+        return self.entry_text
+        
+    def show(
+        self,
+        relx: float = 0.0,
+        rely: float = 0.0,
+        pos_x_line: float = 0.1, 
+        anchor: Any = CENTER
+    ) -> None:
+        self.gamedes_entry.place(relx = relx - 0.01, rely = rely - 0.04, anchor = anchor)
+        self.background_field.place(relx = relx, rely = rely, anchor = anchor)
+        self.foreground_field.place(relx = relx + 0.05, rely = rely + 0.05, anchor = anchor)
+        self.lbl.place(relx = pos_x_line, rely = rely - 0.01)
         
 if __name__ == "__main__":
     from tkinter import Tk

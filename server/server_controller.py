@@ -15,7 +15,7 @@ class Server(object):
         self.server_run_status: bool = False
         
         #databases
-        self.accounts_db = Database("server\\data\\accunts.db", "users")
+        self.accounts_db = Database("server\\data\\accounts.db", "users")
         self.account_keys_db = Database("server\\data\\accounts.db", "keys")
         
     def status_run_server(self) -> bool:
@@ -41,6 +41,8 @@ class Server(object):
                     self.users.append(tuple(client_user.split("_"))) #Добавляем данные пользователя, подключившегося к серверу в список данных пользователей 
                     
                     user_data = tuple(client_user.split("_"))
+                    
+                    #Создаём аккаунт, если id пользователя нету в БД
                     if self.accounts_db.get_data_user(user_data[1]) is None:
                         key = Fernet.generate_key()
                         

@@ -55,7 +55,7 @@ class App(object):
             text = "Почта:",
             bg_2 = "gray7"
         )
-        self.entry_mail.show(relx = 0.5, rely = 0.3, anchor = CENTER)
+        self.entry_mail.show(relx = 0.5, rely = 0.3, pos_x_line = 0.1, anchor = CENTER)
         
         #password
         self.entry_password = GameDes_Entry(
@@ -63,7 +63,7 @@ class App(object):
             text = "Пароль:",
             bg_2 = "gray7"
         )
-        self.entry_password.show(relx = 0.5, rely = 0.55, anchor = CENTER)
+        self.entry_password.show(relx = 0.5, rely = 0.55, pos_x_line = 0.1, anchor = CENTER)
         
         #button registation
         self.btn_enter_account = Default_Button(

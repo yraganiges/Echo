@@ -83,6 +83,7 @@ class Database(object):
             if nickname in index[0]: return "никнейм занят"
             if user_id in index[1]: return "id занят"
             if mail in index[3]: return "аккаунт с такой почтой уже существует"
+            if len(nickname) > 32: return "длина никнейма должна быть короче 32-ух символов"
             
         self.cursor.execute(
             f"INSERT INTO {self.table} VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
