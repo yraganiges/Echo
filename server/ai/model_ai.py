@@ -70,9 +70,10 @@ class NeuralNetwork:
 if __name__ == "__main__":
     nn = NeuralNetwork(
         path_dataset_csv = "server\\ai\\datasets\\danger_messages.csv",
-        columns_dataset = ["messages", "index"]
+        columns_dataset = ["messages", "index"],
+        test_size = 0.5
     )
     
     nn.train(epochs = 10, batch_size = 5) #default: epochs = 10, batch_size = 5
     print(round(nn.evaluate_train()[1], 4))
-    print(nn.predict(text = "ты увлекаешься наркотиками"))
+    print(nn.predict(text = "привет, как дела?"))
