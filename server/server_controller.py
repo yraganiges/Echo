@@ -49,13 +49,11 @@ class Server(object):
                         self.accounts_db.create_account(
                             nickname = user_data[0],
                             user_id = user_data[1],
-                            password = Encryption.encryption_password(
-                                user_data[2],
-                                key
-                            ),
+                            password = user_data[2],
                             mail = user_data[3],
                             date_created_account = user_data[4]
                         )
+                        print(True)
                 except:
                     pass
                 

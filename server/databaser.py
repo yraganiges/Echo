@@ -80,13 +80,16 @@ class Database(object):
     ) -> None | str:
         #Проверяем, есть ли уже такой аккаунт в базе данных
         for index in self.get_all_data():
+            if user_id == "None":
+                user_id = User_ID.generate_user_id()
+            
             if nickname in index[0]: return "никнейм занят"
             if user_id in index[1]: return "id занят"
             if mail in index[3]: return "аккаунт с такой почтой уже существует"
             if len(nickname) > 32: return "длина никнейма должна быть короче 32-ух символов"
             
         self.cursor.execute(
-            f"INSERT INTO {self.table} VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            f"INSERT INTO {self.table} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 nickname, 
                 user_id,
@@ -104,10 +107,10 @@ class Database(object):
 if __name__ == "__main__":
     db = Database("server\\data\\accounts.db", "users")
     db.create_account(
-        nickname = "test1",
+        nickname = "test11",
         user_id = User_ID.generate_user_id(),
         password = "qef24fweg1",
-        mail = "test@gmail.com",
+        mail = "test2@gmail.com",
         date_created_account = str(date.day)
     )
     print(db.get_all_data()) 

@@ -11,7 +11,7 @@ from ui_components.Labels import Top_Field, Text
 from config import ui_config
 from PIL import Image, ImageTk
 
-class App(object):
+class App:
     def __init__(self) -> None:
         self.root = Tk()
         self.root.title(ui_config["title"])

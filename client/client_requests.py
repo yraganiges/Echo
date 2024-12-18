@@ -14,14 +14,17 @@ class Client:
         except:
             return "error_connect"
         
-        self.user_nickname: str = user_data[0]
-        self.user_id: str = user_data[1]
+        user_data_string = ""
         
-        self.server.send((self.user_nickname + "_" + self.user_id).encode()) #nick_id
+        for index in user_data:
+            user_data_string += str(index)
+            user_data_string += "_"
+        
+        self.server.send((user_data_string).encode()) #nick_id
     
 if __name__ == "__main__":
     client = Client(app_config["IP"], app_config["Port"])
-    client.connect_to_server(["user", "f14d1rf2152fqw"])
+    client.connect_to_server(["user", "f14d1rf2152fqw", "q2wr2424wwrwrw", "mail@gmail.com"])
         
     
     

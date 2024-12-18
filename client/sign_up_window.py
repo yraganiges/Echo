@@ -1,5 +1,5 @@
 from tkinter import (
-    Tk, #main
+    Tk, messagebox as msg, #main
     CENTER,  #positions
     Label #ui
 )
@@ -12,6 +12,9 @@ from config import ui_config, app_config
 from PIL import Image, ImageTk
 
 from client_requests import Client
+import authorization as auth
+
+from threading import Thread
 
 class App(object):
     def __init__(self) -> None:
@@ -24,19 +27,36 @@ class App(object):
         try: self.root.iconbitmap("icons\\main_icon.ico")
         except: pass
         
+    def back_to_authorization(self, event) -> None:
+        auth.App().main() #open auth window
+        self.root.destroy() #close sign up window
+        
     def push_button_create_account(self) -> None:
+        entry_mail_data = self.entry_mail.get().get()
+        entry_password_data = self.entry_password.get().get()
+        entry_nickname_data = self.entry_nickname.get().get()
+        
         if (
-            (self.entry_mail.get().get().strip() != self.entry_mail.get_entry_text()) or
-            (len(self.entry_mail.get().get()) > 3) 
+            (entry_mail_data.strip() != self.entry_mail.get_entry_text()) or
+            (len(entry_mail_data) > 3) 
             and
-            (self.entry_password.get().get().strip() != self.entry_password.get_entry_text()) or
-            (len(self.entry_password.get().get()) > 3)
+            (entry_password_data.strip() != self.entry_password.get_entry_text()) or
+            (len(entry_password_data) > 3)
             and
-            (self.entry_nickname.get().get().strip() != self.entry_nickname.get_entry_text()) or
-            (len(self.entry_nickname.get().get()) > 3)
+            (entry_nickname_data.strip() != self.entry_nickname.get_entry_text()) or
+            (len(entry_nickname_data) > 3)
         ):
             client = Client(IP = app_config["IP"], port = app_config["Port"])
-            client.connect_to_server() #Сделать подключение пользователя(передать его данные)
+            client.connect_to_server( #Сделать подключение пользователя(передать его данные)
+                [
+                    entry_nickname_data,
+                    None, #user id
+                    entry_password_data,
+                    entry_mail_data
+                ]
+            )
+        else:
+            msg.showerror("ошибка данных", "Вы заполнили не все данные либо ввели их неправильно")
             
     def build(self) -> None:
         self.top_field = Top_Field(
@@ -92,12 +112,13 @@ class App(object):
         #button registation
         self.btn_enter_account = Default_Button(
             self.root,
-            text = "Создать аккаунт"
+            text = "Создать аккаунт",
+            command_func = self.push_button_create_account
         ).get()
         self.btn_enter_account.place(relx = 0.5, rely = 0.8, anchor = CENTER)
         
         #text_sign_up
-        self.txt_sign_up = Label(
+        self.txt_auth = Label(
             self.root,
             text = "Назад, к окну авторизации",
             bg = "gray9", fg = "#b6b6b8",
@@ -107,12 +128,15 @@ class App(object):
                 "underline"
             )
         )
-        self.txt_sign_up.place(relx = 0.5, rely = 0.87, anchor = CENTER)
-        self.txt_sign_up.bind(
-            "<Enter>", lambda event: self.txt_sign_up.configure(fg = "#f03043")
+        self.txt_auth.place(relx = 0.5, rely = 0.87, anchor = CENTER)
+        self.txt_auth.bind(
+            "<Enter>", lambda event: self.txt_auth.configure(fg = "#f03043")
         )
-        self.txt_sign_up.bind(
-            "<Leave>", lambda event: self.txt_sign_up.configure(fg = "#b6b6b8")
+        self.txt_auth.bind(
+            "<Leave>", lambda event: self.txt_auth.configure(fg = "#b6b6b8")
+        )
+        self.txt_auth.bind(
+            "<Button - 1>", Thread(daemon = True, target = self.back_to_authorization).start()
         )
         
     def main(self) -> None:
