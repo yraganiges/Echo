@@ -46,7 +46,7 @@ class Database(object):
     ) -> None:
         ...
         
-    def get_data_user(self, user_id: User_ID | str) -> Tuple[Any]:
+    def get_data_user(self, user_id: User_ID | str) -> Tuple[Any] | None:
         self.cursor.execute(f"SELECT * FROM {self.table}")
         
         for index in self.cursor.fetchall():
@@ -69,6 +69,18 @@ class Database(object):
         self.cursor.execute(f"SELECT * FROM {self.table}")
         return self.cursor.fetchall()
     
+    def delete_account(
+        self,
+        user_id: User_ID | str,
+    ) -> bool:
+        if self.get_data_user(user_id) is not None:
+            self.cursor.execute(f"DELETE FROM {self.table} WHERE id = ?", (user_id, ))
+            self.db.commit()
+            
+            return True
+        else:
+            return False
+    
     def create_account(
         self,
         nickname: str,
@@ -81,7 +93,8 @@ class Database(object):
         #Проверяем, есть ли уже такой аккаунт в базе данных
         for index in self.get_all_data():
             if user_id == "None":
-                user_id = User_ID.generate_user_id()
+                while (user_id == "None") or (self.get_data_user(user_id) is not None):
+                    user_id = User_ID.generate_user_id()
             
             if nickname in index[0]: return "никнейм занят"
             if user_id in index[1]: return "id занят"
@@ -106,13 +119,14 @@ class Database(object):
     
 if __name__ == "__main__":
     db = Database("server\\data\\accounts.db", "users")
-    db.create_account(
-        nickname = "test11",
-        user_id = User_ID.generate_user_id(),
-        password = "qef24fweg1",
-        mail = "test2@gmail.com",
-        date_created_account = str(date.day)
-    )
-    print(db.get_all_data()) 
-    print(db.table_data_count())
-    print(db.get_data_user(user_id = "dzyg0n546z58854o"))
+    # db.create_account(
+    #     nickname = "test11",
+    #     user_id = User_ID.generate_user_id(),
+    #     password = "qef24fweg1",
+    #     mail = "test2@gmail.com",
+    #     date_created_account = str(date.day)
+    # )
+    # print(db.get_all_data()) 
+    # print(db.table_data_count())
+    # print(db.get_data_user(user_id = "dzyg0n546z58854o"))
+    db.delete_account(user_id = "t3mv7y78s5ylrm69")

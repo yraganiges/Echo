@@ -36,7 +36,6 @@ class Top_Field:
         height: int = 1,
         size: int = 8
     ):
-        
         self.top_field = Label(
             window,
             text = text,

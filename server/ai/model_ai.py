@@ -85,7 +85,7 @@ if __name__ == "__main__":
     )
     nn.train(epochs = 13, batch_size = 5) #default: epochs = 10, batch_size = 5
     print(accursary := round(nn.get_accursary()[1], 4)) 
-    print(nn.predict(text = "давай устроим теракт"))
+    print(nn.predict(text = "Артём оракл"))
     
   # accursary: float = 0.0
     

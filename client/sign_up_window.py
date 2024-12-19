@@ -14,10 +14,11 @@ from PIL import Image, ImageTk
 from client_requests import Client
 import authorization as auth
 
+from typing import Any
 from threading import Thread
 
 class App(object):
-    def __init__(self) -> None:
+    def __init__(self, image: Any = None) -> None:
         self.root = Tk()
         self.root.title(ui_config["title"])
         self.root.geometry("900x600")
@@ -26,6 +27,8 @@ class App(object):
         
         try: self.root.iconbitmap("icons\\main_icon.ico")
         except: pass
+        
+        self.image = image
         
     def back_to_authorization(self, event) -> None:
         auth.App().main() #open auth window
@@ -65,9 +68,12 @@ class App(object):
         ).get()
         self.top_field.place(relx = 0.03, rely = 0.01, anchor = CENTER)
         
-        image = Image.open("client\\ui_components\\RoundedLabel.png")
-        image = image.resize((760, 500))
-        self.photo = ImageTk.PhotoImage(image)
+        if self.image is None:
+            image = Image.open("client\\ui_components\\RoundedLabel.png")
+            image = image.resize((760, 500))
+            self.photo = ImageTk.PhotoImage(image)
+        else:
+            self.photo = self.image
         
         #field
         self.field = Label(
@@ -138,6 +144,9 @@ class App(object):
         self.txt_auth.bind(
             "<Button - 1>", Thread(daemon = True, target = self.back_to_authorization).start()
         )
+        
+    def get_image(self) -> Any:
+        return self.photo
         
     def main(self) -> None:
         self.build()

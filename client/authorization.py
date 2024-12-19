@@ -11,6 +11,10 @@ from ui_components.Labels import Top_Field, Text
 from config import ui_config
 from PIL import Image, ImageTk
 
+from threading import Thread
+
+import sign_up_window
+
 class App:
     def __init__(self) -> None:
         self.root = Tk()
@@ -21,6 +25,10 @@ class App:
         
         try: self.root.iconbitmap("icons\\main_icon.ico")
         except: pass
+        
+    def go_to_sign_up(self):
+        Thread(daemon = False, target = lambda: sign_up_window.App().main()).start() #launch sigh_up window
+        self.root.destroy()
         
     def build(self) -> None:
         self.top_field = Top_Field(
@@ -89,6 +97,9 @@ class App:
         )
         self.txt_sign_up.bind(
             "<Leave>", lambda event: self.txt_sign_up.configure(fg = "#b6b6b8")
+        )
+        self.txt_sign_up.bind(
+            "<Button - 1>", lambda event: Thread(daemon = False, target = self.go_to_sign_up).start()
         )
         
     def main(self) -> None:
