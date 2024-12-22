@@ -1,5 +1,5 @@
 from tkinter import (
-    Tk, messagebox as msg, #main
+    Tk, messagebox as msg, Toplevel, #main
     CENTER,  #positions
     Label #ui
 )
@@ -17,22 +17,20 @@ import authorization as auth
 from typing import Any
 from threading import Thread
 
-class App(object):
-    def __init__(self, image: Any = None) -> None:
-        self.root = Tk()
-        self.root.title(ui_config["title"])
-        self.root.geometry("900x600")
-        self.root.configure(bg = ui_config["window_color"])
-        self.root.resizable(1, 1)
-        
-        try: self.root.iconbitmap("icons\\main_icon.ico")
+class App(Toplevel):
+    def __init__(self) -> None:
+        super().__init__()
+        self.title(ui_config["title"])
+        self.geometry("900x600")
+        self.configure(bg = ui_config["window_color"])
+        self.resizable(1, 1)
+    
+        try: self.iconbitmap("icons\\main_icon.ico")
         except: pass
         
-        self.image = image
-        
-    def back_to_authorization(self, event) -> None:
+    def back_to_authorization(self) -> None:
         auth.App().main() #open auth window
-        self.root.destroy() #close sign up window
+        self.destroy() #close sign up window
         
     def push_button_create_account(self) -> None:
         entry_mail_data = self.entry_mail.get().get()
@@ -63,28 +61,25 @@ class App(object):
             
     def build(self) -> None:
         self.top_field = Top_Field(
-            window = self.root,
+            window = self,
             text = ui_config["title"]
         ).get()
         self.top_field.place(relx = 0.03, rely = 0.01, anchor = CENTER)
         
-        if self.image is None:
-            image = Image.open("client\\ui_components\\RoundedLabel.png")
-            image = image.resize((760, 500))
-            self.photo = ImageTk.PhotoImage(image)
-        else:
-            self.photo = self.image
-        
+        image2 = Image.open("client\\ui_components\\RoundedLabel.png")
+        image2 = image2.resize((760, 500))
+        self.photo2 = ImageTk.PhotoImage(image2)
+
         #field
         self.field = Label(
-            self.root,
-            image = self.photo,
+            self,
+            image = self.photo2,
             bg = ui_config["window_color"]
         ).place(relx = 0.5, rely = 0.5, anchor = CENTER)
         
         #welcome text
         self.welcome_text = Text(
-            self.root,
+            self,
             text = f"Создайте аккаунт в {ui_config['title']}!",
             bg = "gray9",
             size = 16
@@ -93,7 +88,7 @@ class App(object):
         
         #mail
         self.entry_mail = GameDes_Entry(
-            self.root,
+            self,
             text = "Почта:",
             bg_2 = "gray7"
         )
@@ -101,31 +96,31 @@ class App(object):
         
         #password
         self.entry_password = GameDes_Entry(
-            self.root,
+            self,
             text = "Пароль:",
             bg_2 = "gray7"
         )
         self.entry_password.show(relx = 0.3, rely = 0.57, anchor = CENTER)
+        self.btn_enter_account = Default_Button(
+            self,
+            text = "Создать аккаунт",
+            command_func = self.push_button_create_account
+        ).get()
+        self.btn_enter_account.place(relx = 0.5, rely = 0.8, anchor = CENTER)
+        
         
         #nickname
         self.entry_nickname = GameDes_Entry(
-            self.root,
+            self,
             text = "Никнейм:",
             bg_2 = "gray7"
         )
         self.entry_nickname.show(relx = 0.7, rely = 0.45, pos_x_line = 0.5,anchor = CENTER)
         
         #button registation
-        self.btn_enter_account = Default_Button(
-            self.root,
-            text = "Создать аккаунт",
-            command_func = self.push_button_create_account
-        ).get()
-        self.btn_enter_account.place(relx = 0.5, rely = 0.8, anchor = CENTER)
-        
         #text_sign_up
         self.txt_auth = Label(
-            self.root,
+            self,
             text = "Назад, к окну авторизации",
             bg = "gray9", fg = "#b6b6b8",
             font = (
@@ -142,15 +137,14 @@ class App(object):
             "<Leave>", lambda event: self.txt_auth.configure(fg = "#b6b6b8")
         )
         self.txt_auth.bind(
-            "<Button - 1>", Thread(daemon = True, target = self.back_to_authorization).start()
+            "<Button - 1>", lambda event: Thread(daemon = True, target = self.back_to_authorization).start()
         )
-        
-    def get_image(self) -> Any:
-        return self.photo
+
         
     def main(self) -> None:
         self.build()
-        self.root.mainloop()
+        try: self.mainloop()
+        except: pass
         
 if __name__ == "__main__":
     App().main()

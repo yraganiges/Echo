@@ -43,7 +43,7 @@ class Server(object):
                     user_data = tuple(client_user.split("_"))
                     
                     #Создаём аккаунт, если id пользователя нету в БД
-                    if self.accounts_db.get_data_user(user_data[1]) is None:
+                    if self.accounts_db.get_data_user(user_data[1]) is None and user_data[-1] == "CR-ACCOUNT":
                         key = Fernet.generate_key()
                         
                         self.accounts_db.create_account(
@@ -53,7 +53,9 @@ class Server(object):
                             mail = user_data[3],
                             date_created_account = user_data[4]
                         )
-                        print(True)
+                        
+                    if user_data[-1] == "SEND-MESSAGE":
+                        ... #TODO Добавить добавление данных сообщения в БД и на 
                 except:
                     pass
                 

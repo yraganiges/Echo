@@ -1,5 +1,5 @@
 from tkinter import (
-    Tk, #main
+    Tk, Toplevel, #main
     CENTER,  #positions
     Label #ui
 )
@@ -10,29 +10,30 @@ from ui_components.Labels import Top_Field, Text
 
 from config import ui_config
 from PIL import Image, ImageTk
-
+ 
 from threading import Thread
 
 import sign_up_window
 
-class App:
+class App(Tk):
     def __init__(self) -> None:
-        self.root = Tk()
-        self.root.title(ui_config["title"])
-        self.root.geometry("450x600")
-        self.root.configure(bg = ui_config["window_color"])
-        self.root.resizable(0, 0)
+        super().__init__()
+
+        self.title(ui_config["title"])
+        self.geometry("450x600")
+        self.configure(bg = ui_config["window_color"])
+        self.resizable(0, 0)
         
-        try: self.root.iconbitmap("icons\\main_icon.ico")
+        try: self.iconbitmap("icons\\main_icon.ico")
         except: pass
         
     def go_to_sign_up(self):
-        Thread(daemon = False, target = lambda: sign_up_window.App().main()).start() #launch sigh_up window
-        self.root.destroy()
+        Thread(daemon = True, target = lambda: sign_up_window.App().main()).start() #launch sigh_up window
+        self.iconify()
         
     def build(self) -> None:
         self.top_field = Top_Field(
-            window = self.root,
+            window = self,
             text = ui_config["title"]
         ).get()
         self.top_field.place(relx = 0.06, rely = 0.01, anchor = CENTER)
@@ -42,15 +43,18 @@ class App:
         self.photo = ImageTk.PhotoImage(image)
         
         #field
-        self.field = Label(
-            self.root,
-            image = self.photo,
-            bg = ui_config["window_color"]
-        ).place(relx = 0.5, rely = 0.5, anchor = CENTER)
+        try:
+            self.field = Label(
+                self,
+                image = self.photo,
+                bg = ui_config["window_color"]
+            ).place(relx = 0.5, rely = 0.5, anchor = CENTER)
+        except:
+            pass
         
         #welcome text
         self.welcome_text = Text(
-            self.root,
+            self,
             text = f"Добро пожаловать в {ui_config['title']}!",
             bg = "gray9",
             size = 16
@@ -59,7 +63,7 @@ class App:
         
         #mail
         self.entry_mail = GameDes_Entry(
-            self.root,
+            self,
             text = "Почта:",
             bg_2 = "gray7"
         )
@@ -67,7 +71,7 @@ class App:
         
         #password
         self.entry_password = GameDes_Entry(
-            self.root,
+            self,
             text = "Пароль:",
             bg_2 = "gray7"
         )
@@ -75,14 +79,14 @@ class App:
         
         #button registation
         self.btn_enter_account = Default_Button(
-            self.root,
+            self,
             text = "Войти в аккаунт"
         ).get()
         self.btn_enter_account.place(relx = 0.5, rely = 0.75, anchor = CENTER)
         
         #text_sign_up
         self.txt_sign_up = Label(
-            self.root,
+            self,
             text = "Нет аккаунта? Тогда зарегистрируйтесь",
             bg = "gray9", fg = "#b6b6b8",
             font = (
@@ -99,12 +103,12 @@ class App:
             "<Leave>", lambda event: self.txt_sign_up.configure(fg = "#b6b6b8")
         )
         self.txt_sign_up.bind(
-            "<Button - 1>", lambda event: Thread(daemon = False, target = self.go_to_sign_up).start()
+            "<Button - 1>", lambda event: Thread(daemon = True, target = self.go_to_sign_up).start()
         )
         
     def main(self) -> None:
         self.build()
-        self.root.mainloop()
+        self.mainloop()
         
 if __name__ == "__main__":
     App().main()
