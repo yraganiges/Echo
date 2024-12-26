@@ -1,6 +1,9 @@
 from typing import Any, Tuple, List
+from config import app_conf
+
 from datetime import date
 from cryptography.fernet import Fernet
+
 import random
 import sqlite3
 
@@ -81,6 +84,30 @@ class Database(object):
         else:
             return False
     
+    def add_message(
+        self,
+        sender_id: User_ID | str,
+        message: str,
+        time_send_message: date | str,
+        to_whom_message: User_ID | str
+    ) -> None | str:
+        if self.get_data_user(user_id = sender_id) is False: 
+            return "sender id not found!"
+        if self.get_data_user(user_id = to_whom_message) is False:
+            return "receiver id is not found!"
+        
+        if len(message) <= app_conf["max_length_message"]:
+            self.cursor.execute(
+                f"INSERT INTO {self.table} VALUES (?, ?, ?, ?)",
+                (
+                    sender_id,
+                    message,
+                    time_send_message,
+                    to_whom_message
+                )
+            )
+            self.db.commit()
+    
     def create_account(
         self,
         nickname: str,
@@ -88,7 +115,6 @@ class Database(object):
         password: str,
         mail: str,
         date_created_account: date,
-        
     ) -> None | str:
         #Проверяем, есть ли уже такой аккаунт в базе данных
         for index in self.get_all_data():
@@ -129,4 +155,7 @@ if __name__ == "__main__":
     # print(db.get_all_data()) 
     # print(db.table_data_count())
     # print(db.get_data_user(user_id = "dzyg0n546z58854o"))
-    db.delete_account(user_id = "t3mv7y78s5ylrm69")
+    
+    from string_handlers import data_handler
+    print(db.get_data_user(user_id = "j8sr7k5393461e13"))
+    print(data_handler(db.get_data_user(user_id = "j8sr7k5393461e13")).split("$$"))

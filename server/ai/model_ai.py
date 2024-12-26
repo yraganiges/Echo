@@ -83,7 +83,7 @@ if __name__ == "__main__":
         columns_dataset = ["messages", "index"],
         test_size = 0.2
     )
-    nn.train(epochs = 13, batch_size = 5) #default: epochs = 10, batch_size = 5
+    nn.train(epochs = 30, batch_size = 16) #default: epochs = 10, batch_size = 5
     print(accursary := round(nn.get_accursary()[1], 4)) 
     print(nn.predict(text = "Артём оракл"))
     

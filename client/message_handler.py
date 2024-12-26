@@ -1,12 +1,12 @@
 from typing import Any, List
-import validators
+from validators import url
 
 class link(object):
     def __init__(self, link: str) -> None:
         self.link = link
         
     def is_valid_url(self) -> bool:
-        return validators.url(self.link)
+        return url(self.link)
 
 class Message(object):
     def __init__(self, message: str) -> None:
@@ -15,7 +15,7 @@ class Message(object):
     def processing_message(self) -> List[Any]:
         output: List[Any] = []
         for index in self.message:
-            if validators.url(index): #проверяем на ссылку
+            if url(index): #проверяем на ссылку
                 output.append(("link", index))
             else:
                 output.append(("text", index))

@@ -2,6 +2,7 @@ from typing import Any, Tuple, List
 from databaser import User_ID, Database, Encryption
 from threading import Thread
 from cryptography.fernet import Fernet
+from string_handlers import data_handler
 import socket
 import asyncio
 import time
@@ -16,6 +17,7 @@ class Server(object):
         
         #databases
         self.accounts_db = Database("server\\data\\accounts.db", "users")
+        self.messages_db = Database("server\\data\\messages.db", "all_messages")
         self.account_keys_db = Database("server\\data\\accounts.db", "keys")
         
     def status_run_server(self) -> bool:
@@ -38,9 +40,16 @@ class Server(object):
                 try:
                     connect, add = self.serv.accept() #Ждём запросы от клиента
                     client_user = (connect.recv(1024)).decode() #декодируем запрос от клиента, если запрос поступил на сервер
-                    self.users.append(tuple(client_user.split("_"))) #Добавляем данные пользователя, подключившегося к серверу в список данных пользователей 
+                    self.users.append(tuple(client_user.split("$$"))) #Добавляем данные пользователя, подключившегося к серверу в список данных пользователей 
                     
-                    user_data = tuple(client_user.split("_"))
+                    list_user_data = client_user.split("$$")
+                    
+                    if list_user_data[-1] == "":
+                        user_data = tuple(list_user_data[0:-1])
+                    else:
+                        user_data = tuple(list_user_data)
+                        
+                    print(user_data)
                     
                     #Создаём аккаунт, если id пользователя нету в БД
                     if self.accounts_db.get_data_user(user_data[1]) is None and user_data[-1] == "CR-ACCOUNT":
@@ -55,7 +64,22 @@ class Server(object):
                         )
                         
                     if user_data[-1] == "SEND-MESSAGE":
-                        ... #TODO Добавить добавление данных сообщения в БД и на 
+                        #add message
+                        self.messages_db.add_message(
+                            user_data[0], #sender_id
+                            user_data[1], #message
+                            user_data[2], #time_send_message
+                            user_data[3] #to_whom_message(user_id)
+                        )
+                        
+                    if user_data[-1] == "GET-USER-DATA":
+                        print(True)
+                        #Передаём данные пользователя обратно клиенту
+                        connect.sendall(
+                            (data_handler(self.accounts_db.get_data_user(user_data[0]))).encode()
+                        )
+                        print(True)
+                        
                 except:
                     pass
                 
