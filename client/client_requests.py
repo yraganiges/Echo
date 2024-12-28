@@ -2,6 +2,8 @@ from typing import List, Any, Dict, Tuple
 import socket
 from config import app_config
 
+from databaser import Database
+
 def data_handler(data: List[Any]) -> str:
     output = ""
     
@@ -13,15 +15,56 @@ def data_handler(data: List[Any]) -> str:
 
 class Client:
     def __init__(self, IP: str, port: int) -> None:
-        self.server = socket.socket()
         self.IP = IP
         self.port = port
         
-    def get_data_user(self, user_id: str) -> Tuple[Any]:
+        self.contacts_users_db = Database("client\\data\\contacts.db", table = "users")
+        
+    def get_user_avatar(self, user_id: str) -> None:
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
         try:
             self.server.connect((self.IP, self.port))
         except:
             return "connect_error"
+        
+        self.server.send(data_handler([user_id, "GET-USER-AVATAR"]))
+        
+        avatar_from_user_id = (self.server.recv(1024)).decode()
+        
+        if avatar_from_user_id != "user id not found":
+            #принимаем файл с сервера
+            with open(f"client\\avatars\\{user_id}.png", "w") as file:
+                file.write(avatar_from_user_id)
+            
+        self.server.close()
+        
+    def accept_friend_request(self, sender_id: str) -> None:
+        self.contacts_users_db.add_contact(sender_id)
+        
+    def send_friend_request(self, sender_id: str, to_whom_id: str) -> None:
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        try:
+            self.server.connect((self.IP, self.port))
+        except:
+            return "connect_error"
+        
+        self.server.send(
+            data_handler(data = [sender_id, to_whom_id, "wait", "SEND-FRIEND-REQUEST"]).encode()
+        )
+        
+        data_from_server = (self.server.recv(1024)).decode()
+        self.server.close()
+        print(data_from_server)
+        
+    def get_data_user(self, user_id: str) -> Tuple[Any]:
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        try:
+            self.server.connect((self.IP, self.port))
+        except Exception as e:
+            return f"connect_error: {str(e)}"
         
         self.server.send(data_handler(data=[user_id, "GET-USER-DATA"]).encode())
     
@@ -33,6 +76,8 @@ class Client:
         
 
     def send_message(self, message_data: dict[Any], type_message: str) -> None | str:
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
         try:
             self.server.connect((self.IP, self.port))
         except:
@@ -48,18 +93,25 @@ class Client:
             self.server.send((data_handler(data = list_data) + "SEND-MESSAGE").encode())
     
     def connect_to_server(self, user_data: List[Any] = None) -> None | str:
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
         try:
             self.server.connect((self.IP, self.port))
         except:
             return "connect_error"
         
+        user_data.append(None) #avatar
         self.server.send((data_handler(data = user_data) + "CR-ACCOUNT").encode()) #nick_id
     
 if __name__ == "__main__":
     client = Client(app_config["IP"], app_config["Port"])
     # client.connect_to_server(["user", "f14d1rf2152fqw", "q2wr2424wwrwrw", "mail@gmail.com"])
     
-    print(client.get_data_user(user_id = "f14d1rf2152fqw"))
+    # print(client.get_data_user(user_id = "f14d1rf2152fqw"))
+    client.send_friend_request("dzyg0n546z58854o", "j8sr7k5393461e13")
+    client.get_data_user("id1")
+    client.get_data_user("id2")
+    client.get_data_user("id3")
         
     
     

@@ -2,14 +2,15 @@ from typing import Any, Tuple, List
 from databaser import User_ID, Database, Encryption
 from threading import Thread
 from cryptography.fernet import Fernet
-from string_handlers import data_handler
+from string_handlers import data_handler, text_for_generate_avatar_handler
+from avatar_generator import generate_avatar
 import socket
 import asyncio
 import time
 
 class Server(object):
     def __init__(self, IP: str, port: int) -> None:
-        self.serv = socket.socket()
+        self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serv.bind((IP, port))
         
         self.users: List[Any] = []
@@ -17,6 +18,7 @@ class Server(object):
         
         #databases
         self.accounts_db = Database("server\\data\\accounts.db", "users")
+        self.friend_requests_db = Database("server\\data\\accounts.db", "friend_requests")
         self.messages_db = Database("server\\data\\messages.db", "all_messages")
         self.account_keys_db = Database("server\\data\\accounts.db", "keys")
         
@@ -52,15 +54,29 @@ class Server(object):
                     print(user_data)
                     
                     #Создаём аккаунт, если id пользователя нету в БД
-                    if self.accounts_db.get_data_user(user_data[1]) is None and user_data[-1] == "CR-ACCOUNT":
+                    if self.accounts_db.get_data_user(user_data[1]) is None or user_data[-1] == "CR-ACCOUNT":
                         key = Fernet.generate_key()
+                        
+                        if user_data[1] == "None":
+                            user_id = user_data[1]
+                            while (user_id == "None") or (self.accounts_db.get_data_user(user_id) is not None):
+                                user_id = User_ID.generate_user_id()
+                        
+                        path_avatar = f"server\\avatars\\{user_id}.png"
                         
                         self.accounts_db.create_account(
                             nickname = user_data[0],
-                            user_id = user_data[1],
+                            user_id = user_id,
                             password = user_data[2],
                             mail = user_data[3],
-                            date_created_account = user_data[4]
+                            date_created_account = user_data[4],
+                            path_avatar = path_avatar
+                        )
+                        
+                        generate_avatar(
+                            text = text_for_generate_avatar_handler(user_data[0]),
+                            path_save = path_avatar,
+                            size = (100, 100)
                         )
                         
                     if user_data[-1] == "SEND-MESSAGE":
@@ -73,13 +89,27 @@ class Server(object):
                         )
                         
                     if user_data[-1] == "GET-USER-DATA":
-                        print(True)
                         #Передаём данные пользователя обратно клиенту
                         connect.sendall(
                             (data_handler(self.accounts_db.get_data_user(user_data[0]))).encode()
                         )
-                        print(True)
                         
+                    if user_data[-1] == "SEND-FRIEND-REQUEST":
+                        if self.accounts_db.get_data_user(user_id = user_data[1]) is not None:
+                            self.friend_requests_db.insert_data(
+                                (user_data[0], user_data[1], user_data[2])
+                            )
+
+                            connect.sendall("friend request sent".encode()) #response
+                        else:
+                            connect.sendall("user not found".encode())
+                            
+                    if user_data[-1] == "GET-USER-AVATAR":
+                        if self.accounts_db.get_data_user(user_data[0]) is not None:
+                            with open(f"server\\avatars\\{user_data[0]}.png", "r") as file:
+                                connect.sendall(file.read().encode()) #передаём png файл клиенту
+                        else:
+                            connect.sendall("user id not found!")
                 except:
                     pass
                 

@@ -42,12 +42,14 @@ class Database(object):
         self.db = sqlite3.connect(database)
         self.cursor = self.db.cursor()
         
-    def add_data(
+    def insert_data(
         self,
-        names_variables: Tuple[str] | List[str],
-        data_variables: Tuple[Any]
+        values: Tuple[str] | List[str],
     ) -> None:
-        ...
+        values_string = ("(" + ("?," * len(values)))[0:-1] + ")" #example: (?,?,?) 
+        
+        self.cursor.execute(f"INSERT INTO {self.table} VALUES {values_string}", values)
+        self.db.commit()
         
     def get_data_user(self, user_id: User_ID | str) -> Tuple[Any] | None:
         self.cursor.execute(f"SELECT * FROM {self.table}")
@@ -81,8 +83,7 @@ class Database(object):
             self.db.commit()
             
             return True
-        else:
-            return False
+        return False
     
     def add_message(
         self,
@@ -115,13 +116,10 @@ class Database(object):
         password: str,
         mail: str,
         date_created_account: date,
+        path_avatar: str
     ) -> None | str:
         #Проверяем, есть ли уже такой аккаунт в базе данных
         for index in self.get_all_data():
-            if user_id == "None":
-                while (user_id == "None") or (self.get_data_user(user_id) is not None):
-                    user_id = User_ID.generate_user_id()
-            
             if nickname in index[0]: return "никнейм занят"
             if user_id in index[1]: return "id занят"
             if mail in index[3]: return "аккаунт с такой почтой уже существует"
@@ -137,7 +135,7 @@ class Database(object):
                 date_created_account,
                 None, #online_status
                 None, #time_last_online
-                None, #avatar
+                path_avatar, #avatar
                 None #description
             )
         )
@@ -155,7 +153,3 @@ if __name__ == "__main__":
     # print(db.get_all_data()) 
     # print(db.table_data_count())
     # print(db.get_data_user(user_id = "dzyg0n546z58854o"))
-    
-    from string_handlers import data_handler
-    print(db.get_data_user(user_id = "j8sr7k5393461e13"))
-    print(data_handler(db.get_data_user(user_id = "j8sr7k5393461e13")).split("$$"))
