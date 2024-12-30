@@ -54,7 +54,8 @@ class Server(object):
                     print(user_data)
                     
                     #Создаём аккаунт, если id пользователя нету в БД
-                    if self.accounts_db.get_data_user(user_data[1]) is None or user_data[-1] == "CR-ACCOUNT":
+                    # if self.accounts_db.get_data_user(user_data[1]) is None or user_data[-1] == "CR-ACCOUNT":
+                    if user_data[-1] == "CR-ACCOUNT":
                         key = Fernet.generate_key()
                         
                         if user_data[1] == "None":
@@ -88,8 +89,13 @@ class Server(object):
                             user_data[3] #to_whom_message(user_id)
                         )
                         
+                    print(user_data[-1])
+                    print(user_data[-1] == "GET-USER-DATA")                        
+                        
                     if user_data[-1] == "GET-USER-DATA":
+                        print(True)
                         #Передаём данные пользователя обратно клиенту
+                        print(self.accounts_db.get_data_user(user_data[0]))
                         connect.sendall(
                             (data_handler(self.accounts_db.get_data_user(user_data[0]))).encode()
                         )
@@ -113,7 +119,6 @@ class Server(object):
                 except:
                     pass
                 
-                print(self.users)
                 time.sleep(0.5)
                 
         print("end")

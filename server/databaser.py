@@ -152,4 +152,4 @@ if __name__ == "__main__":
     # )
     # print(db.get_all_data()) 
     # print(db.table_data_count())
-    # print(db.get_data_user(user_id = "dzyg0n546z58854o"))
+    print(db.get_data_user(user_id = "0s27298594w99s24"))
