@@ -44,6 +44,7 @@ class Server(object):
                     client_user = (connect.recv(1024)).decode() #декодируем запрос от клиента, если запрос поступил на сервер
                     self.users.append(tuple(client_user.split("$$"))) #Добавляем данные пользователя, подключившегося к серверу в список данных пользователей 
                     
+                    print(client_user)
                     list_user_data = client_user.split("$$")
                     
                     if list_user_data[-1] == "":
@@ -80,13 +81,14 @@ class Server(object):
                             size = (100, 100)
                         )
                         
-                    if user_data[-1] == "SEND-MESSAGE":
+                    if user_data[-1] == "SEND-TEXT-MESSAGE":
                         #add message
                         self.messages_db.add_message(
-                            user_data[0], #sender_id
-                            user_data[1], #message
-                            user_data[2], #time_send_message
-                            user_data[3] #to_whom_message(user_id)
+                            sender_id = user_data[0], #sender_id
+                            data_message = user_data[1], #message
+                            type_message = "text",
+                            time_send_message = user_data[2], #time_send_message
+                            to_whom_message = user_data[3] #to_whom_message(user_id)
                         )
                         
                     print(user_data[-1])

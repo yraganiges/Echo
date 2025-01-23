@@ -85,26 +85,49 @@ class Database(object):
             return True
         return False
     
+    def check_table_exists(self, table: str = None) -> bool:
+        self.cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?", (
+                self.table if table is None else table,
+            )
+        )
+        self.db.commit()
+
+        return self.cursor.fetchone() is not None
+    
     def add_message(
         self,
         sender_id: User_ID | str,
-        message: str,
+        data_message: str,
+        type_message: str, 
         time_send_message: date | str,
         to_whom_message: User_ID | str
     ) -> None | str:
+        print(self.check_table_exists())
         if self.get_data_user(user_id = sender_id) is False: 
             return "sender id not found!"
         if self.get_data_user(user_id = to_whom_message) is False:
             return "receiver id is not found!"
         
-        if len(message) <= app_conf["max_length_message"]:
+        table_name = f"{sender_id}$${to_whom_message}"
+        
+        # Выполняем запрос для проверки существования таблицы
+        if self.check_table_exists(table_name) == False:
+            self.cursor.execute( #создаём таблицу
+                f"""CREATE TABLE {table_name} (
+                    data_message text,
+                    type_message text,
+                    time_send_message text
+                )"""
+            )
+        
+        if ((len(data_message) <= app_conf["max_length_message"]) and (type_message == "text")) or (type_message != "text"):
             self.cursor.execute(
-                f"INSERT INTO {self.table} VALUES (?, ?, ?, ?)",
+                f"INSERT INTO {table_name} VALUES (?, ?, ?)",
                 (
-                    sender_id,
-                    message,
+                    data_message,
+                    type_message,
                     time_send_message,
-                    to_whom_message
                 )
             )
             self.db.commit()
@@ -153,3 +176,4 @@ if __name__ == "__main__":
     # print(db.get_all_data()) 
     # print(db.table_data_count())
     print(db.get_data_user(user_id = "0s27298594w99s24"))
+    print(db.check_table_exists())

@@ -11,7 +11,7 @@ def data_handler(data: List[Any]) -> str:
         output += str(index)
         output += "$$"
         
-    return output
+    return output 
 
 class Client:
     def __init__(self, IP: str, port: int) -> None:
@@ -73,7 +73,6 @@ class Client:
         
         self.server.close()
         return data_from_user_id.split("$$")
-        
 
     def send_message(self, message_data: dict[Any], type_message: str) -> None | str:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -90,7 +89,7 @@ class Client:
             print(list_data)
             
         if type_message == "text":
-            self.server.send((data_handler(data = list_data) + "SEND-MESSAGE").encode())
+            self.server.send((data_handler(data = list_data) + "SEND-TEXT-MESSAGE").encode())
     
     def connect_to_server(self, user_data: List[Any] = None) -> None | str:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -106,12 +105,15 @@ class Client:
 if __name__ == "__main__":
     client = Client(app_config["IP"], app_config["Port"])
     # client.connect_to_server(["user", "f14d1rf2152fqw", "q2wr2424wwrwrw", "mail@gmail.com"])
-    
     # print(client.get_data_user(user_id = "f14d1rf2152fqw"))
-    client.send_friend_request("dzyg0n546z58854o", "j8sr7k5393461e13")
-    client.get_data_user("id1")
-    client.get_data_user("id2")
-    client.get_data_user("id3")
-        
+    
+    message_data = {
+        "sender_id": "dzyg0n546z58854o",
+        "message": "Здаров, как дела?",
+        "time_send_message": "21:36 05.01.2025",
+        "to_whom_message": "j8sr7k5393461e13"
+    }
+    
+    client.send_message(message_data, "text")
     
     
