@@ -3,6 +3,7 @@ import socket
 from config import app_config
 
 from databaser import Database
+from ast import literal_eval
 
 def data_handler(data: List[Any]) -> str:
     output = ""
@@ -58,6 +59,24 @@ class Client:
         self.server.close()
         print(data_from_server)
         
+    def get_chat(self, self_user_id: str, interlocutor_id: str) -> List[Any] | None:
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        try:
+            self.server.connect((self.IP, self.port))
+        except:
+            return "connect_error"
+        
+        self.server.send(
+            data_handler(data = [self_user_id, interlocutor_id, "GET-CHAT"]).encode()
+        )
+
+        server_data = self.server.recv(1024).decode() #data from server
+        
+        if server_data != "None":
+            return literal_eval(server_data)
+        return None 
+        
     def get_data_user(self, user_id: str) -> Tuple[Any]:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
@@ -111,9 +130,16 @@ if __name__ == "__main__":
         "sender_id": "dzyg0n546z58854o",
         "message": "Здаров, как дела?",
         "time_send_message": "21:36 05.01.2025",
-        "to_whom_message": "j8sr7k5393461e13"
+        "to_whom_message": "k3w7jxthk3ufihus"
     }
     
     client.send_message(message_data, "text")
+    
+    # client.send_message(message_data, "text")
+    print(client.get_chat(
+        self_user_id = "dzyg0n546z58854o",
+        interlocutor_id = "k3w7jxthk3ufihus"
+    ))
+    
     
     

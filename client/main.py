@@ -1,7 +1,9 @@
-from tkinter import Tk, CENTER, Label, Button, Entry 
+from tkinter import Tk, CENTER, LEFT, END, Label, Button, Entry, scrolledtext
 from ui_components.Labels import Top_Field
+from ui_components.Entry import Default_Entry
 
 from PIL import Image, ImageTk
+from datetime import datetime
 
 from config import ui_config, app_config
 from client_requests import Client
@@ -11,7 +13,7 @@ from threading import Thread
 
 
 class App(object):
-    def __init__(self) -> None:
+    def __init__(self, user_id: str) -> None:
         self.root = Tk()
         self.root.title(ui_config["title"])
         self.root.geometry("1640x920")
@@ -22,6 +24,8 @@ class App(object):
         
         self.client = Client(IP = app_config["IP"], port = app_config["Port"])
         self.users_db = Database("client\\data\\contacts.db", "users")
+        
+        self.self_user_id = user_id
         
         self.images = []
         self.added_users = []
@@ -61,10 +65,12 @@ class App(object):
                     )
                     self.txt_data_contact.place(relx=self.x - 0.03, rely=self.y - 0.01, anchor="w")  # Убедитесь, что anchor также установлен на "w"
 
-                    #TODO добавить последнее сообщение из чата
+                    #последнее сообщение из чата
+                    chat_data = self.client.get_chat(self.self_user_id, user_data[1])
+                    
                     self.txt_last_message = Label(
                         self.root,
-                        text = "    last message...", 
+                        text = f"       {chat_data[-1][0][0:15]}..." if chat_data != None else "    last message...", 
                         bg = "#171717", fg = "gray30",
                         font=(ui_config["fonts"][0], 8, "italic")
                     )
@@ -95,12 +101,94 @@ class App(object):
                     print(f"Error loading image {avatar_path}: {e}")
                 
     def open_chat_user(self, user_id: str) -> None:
-        print(self.users_db.get_data_chat(user_id))
-        try: self.entry_message.destroy()
-        except: pass
+        chat_data = self.client.get_chat(self.self_user_id, user_id)
+        print(chat_data)
         
-        self.entry_message = Entry
-   
+        try:
+            self.entry_message.destroy()
+            self.btn_send_message.destroy()
+            self.chat_display.destroy()
+        except: 
+            pass
+        
+        self.chat_display = scrolledtext.ScrolledText(
+            self.root,
+            state = "normal", #disabled
+            width = 100, height = 40,
+            bg = "gray7", fg = "white",
+            bd = 0,
+            font = (
+                ui_config["fonts"][0],
+                12
+            )
+        )        
+        self.chat_display.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+        
+        if chat_data != None:
+            for index in chat_data:
+                info = f"<{str(index[2])}>\n"
+                if index[3] == self.self_user_id:
+                    info += "Вы: "
+                else:
+                    info += self.client.get_data_user(index[3])[0]
+                
+                info += str(index[0]).strip() + "\n\n" #добавляем сообщение пользователя
+                
+                self.chat_display.insert(END, info)
+                
+                
+        self.entry_message = Default_Entry(
+            self.root,
+            text = "Введите сообщение...",
+            justify = LEFT,
+            bg = "gray18",
+            fg = "#8c8c8c", # > gray32
+            width = 80,
+            font = ui_config["fonts"][0],
+            size = 13
+        ).get()
+        self.entry_message.place(relx = 0.48, rely = 0.95, anchor = CENTER)
+        
+        image = Image.open("client\\ui_components\\send_message.png")
+        image = image.resize((30, 30), Image.ANTIALIAS)  # Увеличение размера для теста
+        self.image = ImageTk.PhotoImage(image)
+        # self.images.append(self.avatar)
+        
+        #кнопка отправить сообщение
+        self.btn_send_message = Button(
+            self.root,
+            image = self.image,
+            bg = "gray32", bd = 0,
+            command = lambda: self.send_text_message(
+                message = self.entry_message.get(),
+                sender_id = self.self_user_id,
+                receiver_id = user_id
+            )
+        )
+        self.btn_send_message.place(relx = 0.75, rely = 0.95, anchor = CENTER)
+        self.btn_send_message.bind(
+            "<Enter>", lambda event: self.btn_send_message.configure(bg = "#595958")
+        )
+        self.btn_send_message.bind(
+            "<Leave>", lambda event: self.btn_send_message.configure(bg = "gray32")
+        )
+    
+    def send_text_message(self, message: str, sender_id: str, receiver_id: str) -> None:
+        now_time = datetime.now().strftime("%H:%M %Y-%m-%d")
+        
+        if message.lower().strip() == "введите сообщение..." or message.strip() == "":
+            return
+        
+        message_data = {
+            "sender_id": sender_id,
+            "message": message.strip(),
+            "time_send_message": now_time,
+            "to_whom_message": receiver_id
+        }   
+
+        self.client.send_message(message_data, "text")
+        self.chat_display.insert(END, f"<{now_time}>\nВы: {message}\n\n") #добавляем сообщение в чат дисплей
+    
     def build(self) -> None:
         Label(
             self.root,
@@ -137,4 +225,4 @@ class App(object):
         self.root.mainloop()
         
 if __name__ == "__main__": 
-    App().main()
+    App("dzyg0n546z58854o").main()

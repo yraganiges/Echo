@@ -103,34 +103,51 @@ class Database(object):
         time_send_message: date | str,
         to_whom_message: User_ID | str
     ) -> None | str:
-        print(self.check_table_exists())
-        if self.get_data_user(user_id = sender_id) is False: 
-            return "sender id not found!"
-        if self.get_data_user(user_id = to_whom_message) is False:
-            return "receiver id is not found!"
         
-        table_name = f"{sender_id}$${to_whom_message}"
+        # Проверяем существование пользователя
+        if self.get_data_user(user_id=sender_id) is False: 
+            return "Sender ID not found!"
         
-        # Выполняем запрос для проверки существования таблицы
-        if self.check_table_exists(table_name) == False:
-            self.cursor.execute( #создаём таблицу
-                f"""CREATE TABLE {table_name} (
-                    data_message text,
-                    type_message text,
-                    time_send_message text
-                )"""
-            )
+        if self.get_data_user(user_id=to_whom_message) is False:
+            return "Receiver ID not found!"
         
-        if ((len(data_message) <= app_conf["max_length_message"]) and (type_message == "text")) or (type_message != "text"):
-            self.cursor.execute(
-                f"INSERT INTO {table_name} VALUES (?, ?, ?)",
-                (
-                    data_message,
-                    type_message,
-                    time_send_message,
+        table_name = f"{sender_id}$$${to_whom_message}"
+        
+        # Проверяем существование таблицы
+        if not self.check_table_exists(table_name):
+            try:
+                self.cursor.execute( # Создаем таблицу
+                    f"""CREATE TABLE {table_name} (
+                        data_message TEXT,
+                        type_message TEXT,
+                        time_send_message TEXT,
+                        sender_id TEXT,
+                        receiver_id TEXT
+                    )"""
                 )
-            )
-            self.db.commit()
+                self.db.commit()  # Сохраняем изменения
+            except Exception as e:
+                return f"Error creating table: {str(e)}"
+        
+        # Проверяем длину сообщения и тип сообщения
+        if ((len(data_message) <= app_conf["max_length_message"]) and (type_message == "text")) or (type_message != "text"):
+            try:
+                self.cursor.execute(
+                    f"INSERT INTO {table_name} VALUES (?, ?, ?, ?, ?)",
+                    (
+                        data_message,
+                        type_message,
+                        time_send_message,
+                        sender_id,
+                        to_whom_message
+                    )
+                )
+                self.db.commit()  # Сохраняем изменения
+            except Exception as e:
+                return f"Error inserting message: {str(e)}"
+        else:
+            return "Message length exceeds the maximum limit."
+
     
     def create_account(
         self,
@@ -175,5 +192,13 @@ if __name__ == "__main__":
     # )
     # print(db.get_all_data()) 
     # print(db.table_data_count())
-    print(db.get_data_user(user_id = "0s27298594w99s24"))
-    print(db.check_table_exists())
+    
+    chat_db = Database(
+        database = "server\\data\\messages.db",
+        table = "dzyg0n546z58854o$$j8sr7k5393461e13"
+    )
+    print(chat_db.get_all_data()) 
+    """[
+        ('Здаров, как дела?', 'text', '21:36 05.01.2025'),
+        ('Здаров, как дела?', 'text', '21:36 05.01.2025')
+    ]"""

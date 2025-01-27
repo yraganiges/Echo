@@ -95,12 +95,32 @@ class Server(object):
                     print(user_data[-1] == "GET-USER-DATA")                        
                         
                     if user_data[-1] == "GET-USER-DATA":
-                        print(True)
                         #Передаём данные пользователя обратно клиенту
                         print(self.accounts_db.get_data_user(user_data[0]))
                         connect.sendall(
                             (data_handler(self.accounts_db.get_data_user(user_data[0]))).encode()
                         )
+                        
+                    if user_data[-1] == "GET-CHAT":
+                        
+                        self.chat_db = Database(
+                            database = "server\\data\\messages.db",
+                            table = f"{user_data[0]}$$${user_data[1]}"
+                        )
+                        
+                        if self.chat_db.check_table_exists() == False:
+                            self.chat_db = Database(
+                                database = "server\\data\\messages.db",
+                                table = f"{user_data[1]}$$${user_data[0]}"
+                            )
+                            
+                        if self.chat_db.check_table_exists() == False:
+                            connect.sendall("None".encode())
+                        else:
+                            #Передаём клиенту данные о переписке
+                            connect.sendall(
+                                str(self.chat_db.get_all_data()).encode()
+                            )
                         
                     if user_data[-1] == "SEND-FRIEND-REQUEST":
                         if self.accounts_db.get_data_user(user_id = user_data[1]) is not None:
