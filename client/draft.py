@@ -149,5 +149,6 @@ if __name__ == "__main__":
     root = tk.Tk()
     chat_app = ChatApp(root)
     root.mainloop()
+    
 
 

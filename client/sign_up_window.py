@@ -32,7 +32,7 @@ class App(Toplevel):
         auth.App().main() #open auth window
         self.destroy() #close sign up window
         
-    def push_button_create_account(self) -> None:
+    def push_button_create_account(self, event) -> None:
         entry_mail_data = self.entry_mail.get().get()
         entry_password_data = self.entry_password.get().get()
         entry_nickname_data = self.entry_nickname.get().get()
@@ -101,12 +101,16 @@ class App(Toplevel):
             bg_2 = "gray7"
         )
         self.entry_password.show(relx = 0.3, rely = 0.57, anchor = CENTER)
-        self.btn_enter_account = Default_Button(
+        
+        self.btn_enter_account = Rounded_Button(
             self,
             text = "Создать аккаунт",
-            command_func = self.push_button_create_account
-        ).get()
-        self.btn_enter_account.place(relx = 0.5, rely = 0.8, anchor = CENTER)
+            width = 180, height = 65,
+            radius = 15,
+            command_func = self.push_button_create_account,
+            back_color = "gray9"
+        )
+        self.btn_enter_account.place(relx = 0.5, rely = 0.78, anchor = CENTER)
         
         
         #nickname

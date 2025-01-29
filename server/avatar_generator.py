@@ -29,7 +29,7 @@ if __name__ == "__main__":
     from string_handlers import text_for_generate_avatar_handler
     
     generate_avatar(
-        text = text_for_generate_avatar_handler("test nickname"),
-        path_save = "server\\avatars\\test_image.png",
+        text = text_for_generate_avatar_handler("huracan"),
+        path_save = "server\\avatars\\79k261w10r0ui03i.png",
         size = (100, 100)
     )

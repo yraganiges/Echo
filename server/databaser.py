@@ -44,7 +44,7 @@ class Database(object):
         
     def insert_data(
         self,
-        values: Tuple[str] | List[str],
+        values: Tuple[str],
     ) -> None:
         values_string = ("(" + ("?," * len(values)))[0:-1] + ")" #example: (?,?,?) 
         
@@ -106,10 +106,10 @@ class Database(object):
         
         # Проверяем существование пользователя
         if self.get_data_user(user_id=sender_id) is False: 
-            return "Sender ID not found!"
+            return "<er>:Sender ID not found!"
         
         if self.get_data_user(user_id=to_whom_message) is False:
-            return "Receiver ID not found!"
+            return "<er>:Receiver ID not found!"
         
         table_name = f"{sender_id}$$${to_whom_message}"
         
@@ -127,7 +127,7 @@ class Database(object):
                 )
                 self.db.commit()  # Сохраняем изменения
             except Exception as e:
-                return f"Error creating table: {str(e)}"
+                return f"<er>:Error creating table: {str(e)}"
         
         # Проверяем длину сообщения и тип сообщения
         if ((len(data_message) <= app_conf["max_length_message"]) and (type_message == "text")) or (type_message != "text"):
@@ -144,10 +144,25 @@ class Database(object):
                 )
                 self.db.commit()  # Сохраняем изменения
             except Exception as e:
-                return f"Error inserting message: {str(e)}"
+                return f"<er>:Error inserting message: {str(e)}"
         else:
-            return "Message length exceeds the maximum limit."
+            return "<er>:Message length exceeds the maximum limit."
 
+    def add_contact(self, self_id: str, contact_id: str) -> None:
+        # if (self.get_data_user(self_id) is None) or (self.get_data_user(contact_id)) is None:
+        #     return "<er>:user id is not found!"
+        
+        #создаём таблицу, если такой нету
+        if self.check_table_exists(self_id) is False:
+            self.cursor.execute(
+                f"""CREATE TABLE {self_id} (
+                    contact_id text
+                )"""
+            )
+            self.db.commit()
+            
+        self.cursor.execute(f"INSERT INTO {self_id} VALUES (?)", (contact_id,))
+        self.db.commit()
     
     def create_account(
         self,
@@ -160,10 +175,12 @@ class Database(object):
     ) -> None | str:
         #Проверяем, есть ли уже такой аккаунт в базе данных
         for index in self.get_all_data():
-            if nickname in index[0]: return "никнейм занят"
-            if user_id in index[1]: return "id занят"
-            if mail in index[3]: return "аккаунт с такой почтой уже существует"
-            if len(nickname) > 32: return "длина никнейма должна быть короче 32-ух символов"
+            if nickname in index[0]: return "<er>:никнейм занят"
+            if user_id in index[1]: return "<er>:id занят"
+            if mail in index[3]: return "<er>:аккаунт с такой почтой уже существует"
+            if len(nickname) > 32: return "<er>:длина никнейма должна быть короче 32-ух символов"
+            if len(nickname) < 3: return "<er>:длина никнейма должна быть длинее 3-х символов"
+            if nickname.strip() == "": return "<er>:никнейм не может быть пустым"
             
         self.cursor.execute(
             f"INSERT INTO {self.table} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",

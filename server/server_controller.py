@@ -20,7 +20,9 @@ class Server(object):
         self.accounts_db = Database("server\\data\\accounts.db", "users")
         self.friend_requests_db = Database("server\\data\\accounts.db", "friend_requests")
         self.messages_db = Database("server\\data\\messages.db", "all_messages")
-        self.account_keys_db = Database("server\\data\\accounts.db", "keys")
+        # self.messages_db = Database("server\\data\\messages.db", "all_messages")
+        # self.account_keys_db = Database("server\\data\\accounts.db", "keys")
+        
         
     def status_run_server(self) -> bool:
         return self.server_run_status
@@ -35,7 +37,7 @@ class Server(object):
         self.server_run_status = False
         self.serv.close() #stop server
         
-    def listen(self) -> None:
+    def listen(self, delay: float = 0.1) -> None:
         print("start")
         if self.status_run_server():
             while self.status_run_server():
@@ -81,6 +83,14 @@ class Server(object):
                             size = (100, 100)
                         )
                         
+                    if user_data[-1] == "ADD-CONTACT":
+                        self.contacts_db = Database("server\\data\\contacts.db", user_data[0])
+                        
+                        self.contacts_db.add_contact(
+                            self_id = user_data[0],
+                            contact_id = user_data[1]
+                        )
+                        
                     if user_data[-1] == "SEND-TEXT-MESSAGE":
                         #add message
                         self.messages_db.add_message(
@@ -122,6 +132,18 @@ class Server(object):
                                 str(self.chat_db.get_all_data()).encode()
                             )
                         
+                    if user_data[-1] == "GET-CONTACTS":
+                        self.contacts_db = Database(
+                            "server\\data\\contacts.db",
+                            user_data[0]
+                        )
+                        
+                        #Передаём данные чата
+                        connect.sendall(
+                            str(self.contacts_db.get_all_data()).encode()
+                        )
+                                            
+                        
                     if user_data[-1] == "SEND-FRIEND-REQUEST":
                         if self.accounts_db.get_data_user(user_id = user_data[1]) is not None:
                             self.friend_requests_db.insert_data(
@@ -134,14 +156,14 @@ class Server(object):
                             
                     if user_data[-1] == "GET-USER-AVATAR":
                         if self.accounts_db.get_data_user(user_data[0]) is not None:
-                            with open(f"server\\avatars\\{user_data[0]}.png", "r") as file:
-                                connect.sendall(file.read().encode()) #передаём png файл клиенту
+                            with open(f"server\\avatars\\{user_data[0]}.png", "rb") as file:
+                                connect.sendall(file.read()) #передаём png файл клиенту
                         else:
                             connect.sendall("user id not found!")
                 except:
                     pass
                 
-                time.sleep(0.5)
+                time.sleep(delay)
                 
         print("end")
         

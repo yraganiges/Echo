@@ -4,12 +4,13 @@ from ui_components.Entry import Default_Entry
 
 from PIL import Image, ImageTk
 from datetime import datetime
+from random import choice
 
 from config import ui_config, app_config
 from client_requests import Client
 from databaser import Database
 
-from threading import Thread
+import os
 
 
 class App(object):
@@ -32,11 +33,16 @@ class App(object):
         self.x, self.y = 0.13, 0.1
         
     def contacts_handler(self) -> None:
-        for index in self.users_db.get_data():
+        for index in self.client.get_data_contacts(self_id = self.self_user_id):
             user_data = self.client.get_data_user(index[0])
             print(user_data)
 
             avatar_path = f"client\\user_avatars\\{user_data[1]}.png"
+            
+            #проверка существования аватара в директории
+            if not os.path.exists(avatar_path):
+                self.client.get_user_avatar(user_id = user_data[1])
+            
             print(f"Loading avatar from: {avatar_path}")  # Отладочная информация
 
             if user_data[1] not in self.added_users:        
@@ -79,17 +85,26 @@ class App(object):
                     self.lbl.bind("<Enter>", lambda event: event.widget.configure(bg="gray10"))
                     self.lbl.bind("<Leave>", lambda event: event.widget.configure(bg="#1e1f1e"))
                     self.lbl.bind(
-                        "<Button - 1>", lambda event: self.open_chat_user(event.widget["text"])
+                        "<Button - 1>", lambda event: (
+                            self.open_chat_user(event.widget["text"]),
+                            self.load_right_part(event.widget["text"])
+                        )
                     )
                     
-                    image = Image.open(avatar_path)
-                    image = image.resize((40, 40), Image.ANTIALIAS)  # Увеличение размера для теста
-                    self.avatar = ImageTk.PhotoImage(image)
-                    self.images.append(self.avatar)
+                    image = None
+                    
+                    #Открываем директорию с аватарами
+                    try:
+                        image = Image.open(avatar_path)
+                        image = image.resize((40, 40), Image.ANTIALIAS)  # Увеличение размера для теста
+                        self.avatar = ImageTk.PhotoImage(image)
+                        self.images.append(self.avatar)
+                    except:
+                        pass
 
                     avatar_label = Label(
                         self.root,
-                        image=self.avatar,
+                        image=self.avatar if image is not None else "",
                         bg = "gray8"
                     )
                     avatar_label.place(relx=self.x - 0.05, rely=self.y, anchor=CENTER)
@@ -99,15 +114,65 @@ class App(object):
 
                 except Exception as e:
                     print(f"Error loading image {avatar_path}: {e}")
-                
+    
+    #правая часть
+    def load_right_part(self, user_id: str) -> None:
+        user_data = self.client.get_data_user(user_id)
+        colors = ["#120909", "#0e0b14", "#211a24", "#241f1f"]
+        
+        #аватар пользователя
+        try:
+            img_logo = Image.open(f"client\\user_avatars\\{user_data[1]}.png")
+            img_logo = img_logo.resize((120, 120), Image.ANTIALIAS) 
+            self.img_logo = ImageTk.PhotoImage(img_logo)
+        except:
+            pass
+        
+        self.lbl_right_path = Label(
+            self.root,
+            width = 80,
+            height = 100,
+            bg = "gray9"
+        )
+        self.lbl_right_path.place(relx = 0.955, rely = 0.5, anchor = CENTER)
+        
+        self.lbl_backgroud_avatar = Label(
+            self.root,
+            width = 80,
+            height = 12,
+            bg = "#262425" #choice(colors)    
+        )
+        self.lbl_backgroud_avatar.place(relx = 0.955, rely = 0.1, anchor = CENTER)
+        
+        self.title_label.lift()
+        
+        #аватар
+        self.avatar_label = Label(
+            self.root,
+            image = self.img_logo, 
+        )
+        self.avatar_label.place(relx = 0.89, rely = 0.18, anchor = CENTER)
+        
+        #никнейм
+        self.txt_nickname_rp = Label(
+            self.root,
+            text = user_data[0], #nickname
+            bg = "gray9", fg = "white",
+            font = (
+                ui_config["fonts"][0],
+                20
+            )
+        )
+        self.txt_nickname_rp.place(relx = 0.89, rely = 0.28, anchor = CENTER)
+            
     def open_chat_user(self, user_id: str) -> None:
         chat_data = self.client.get_chat(self.self_user_id, user_id)
-        print(chat_data)
         
         try:
             self.entry_message.destroy()
             self.btn_send_message.destroy()
             self.chat_display.destroy()
+            self.txt_not_chat.destroy()
         except: 
             pass
         
@@ -126,6 +191,7 @@ class App(object):
         
         if chat_data != None:
             for index in chat_data:
+                
                 info = f"<{str(index[2])}>\n"
                 if index[3] == self.self_user_id:
                     info += "Вы: "
@@ -134,30 +200,46 @@ class App(object):
                 
                 info += str(index[0]).strip() + "\n\n" #добавляем сообщение пользователя
                 
-                self.chat_display.insert(END, info)
+                self.chat_display.insert(
+                    END, info,
+                    "you" if index[3] == self.self_user_id else "interlocutor"
+                )
                 
-                
+            self.chat_display.tag_config("you", foreground = "#b5ace8")
+            self.chat_display.tag_config("interlocutor", foreground = "#c1ace8")
+        else:
+            self.txt_not_chat = Label(
+                self.root,
+                text = "У вас нету переписки с данным контактом, но\nвы можете её начать первым😀",
+                bg = "gray7", fg = "#4a4061",
+                font = (
+                    ui_config["fonts"][0],
+                    20
+                )
+            )
+            self.txt_not_chat.place(relx = 0.48, rely = 0.5, anchor = CENTER)
+    
         self.entry_message = Default_Entry(
             self.root,
             text = "Введите сообщение...",
             justify = LEFT,
             bg = "gray18",
-            fg = "#8c8c8c", # > gray32
+            fg = "#c0bcf7", # > gray32
             width = 80,
             font = ui_config["fonts"][0],
             size = 13
         ).get()
         self.entry_message.place(relx = 0.48, rely = 0.95, anchor = CENTER)
         
-        image = Image.open("client\\ui_components\\send_message.png")
-        image = image.resize((30, 30), Image.ANTIALIAS)  # Увеличение размера для теста
-        self.image = ImageTk.PhotoImage(image)
+        img_send_message = Image.open("client\\ui_components\\send_message.png")
+        img_send_message = img_send_message.resize((30, 30), Image.ANTIALIAS)
+        self.img_send_message = ImageTk.PhotoImage(img_send_message)
         # self.images.append(self.avatar)
         
         #кнопка отправить сообщение
         self.btn_send_message = Button(
             self.root,
-            image = self.image,
+            image = self.img_send_message,
             bg = "gray32", bd = 0,
             command = lambda: self.send_text_message(
                 message = self.entry_message.get(),
@@ -187,16 +269,25 @@ class App(object):
         }   
 
         self.client.send_message(message_data, "text")
-        self.chat_display.insert(END, f"<{now_time}>\nВы: {message}\n\n") #добавляем сообщение в чат дисплей
+        self.chat_display.insert(
+            END, 
+            f"<{now_time}>\nВы: {message}\n\n",
+            "you",
+        ) #добавляем сообщение в чат дисплей
+        
+        #удаляем текст о начале переписки, если оно имелось
+        try: self.txt_not_chat.destroy() 
+        except: pass
     
     def build(self) -> None:
-        Label(
+        self.title_label = Label(
             self.root,
             text = ui_config["title"],
             bg = "gray12", fg = "#a3a0a0",
             width = 500, height = 1,
             font = ("Arial Black", 8)
-        ).place(relx = 0.018, rely = 0.01, anchor = CENTER)
+        )
+        self.title_label.place(relx = 0.018, rely = 0.01, anchor = CENTER)
         
         #users field
         Label(
