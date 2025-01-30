@@ -50,8 +50,8 @@ class Client:
         
         self.server.send(data_handler([user_id, "GET-USER-AVATAR"]).encode())
         
-        avatar_from_user_id = self.server.recv(1024)
-        
+        avatar_from_user_id = self.server.recv((1024 ** 3) // 3 ) #~2мб
+                
         if avatar_from_user_id != "user id not found":
             #принимаем файл с сервера
             with open(f"client\\user_avatars\\{user_id}.png", "wb") as file:
@@ -60,8 +60,6 @@ class Client:
             return "<er>:not load avatar"
             
         self.server.close()
-        
-    
         
     def get_chat(self, self_user_id: str, interlocutor_id: str) -> List[Any] | None:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -37,7 +37,7 @@ class Server(object):
         self.server_run_status = False
         self.serv.close() #stop server
         
-    def listen(self, delay: float = 0.1) -> None:
+    def listen(self, delay: float = 0.05) -> None:
         print("start")
         if self.status_run_server():
             while self.status_run_server():

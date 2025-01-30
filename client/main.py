@@ -1,6 +1,7 @@
 from tkinter import Tk, CENTER, LEFT, END, Label, Button, Entry, scrolledtext
 from ui_components.Labels import Top_Field
 from ui_components.Entry import Default_Entry
+from ui_components.Buttons import Rounded_Button
 
 from PIL import Image, ImageTk
 from datetime import datetime
@@ -9,6 +10,8 @@ from random import choice
 from config import ui_config, app_config
 from client_requests import Client
 from databaser import Database
+
+from handlers import make_indents
 
 import os
 
@@ -40,8 +43,10 @@ class App(object):
             avatar_path = f"client\\user_avatars\\{user_data[1]}.png"
             
             #проверка существования аватара в директории
-            if not os.path.exists(avatar_path):
-                self.client.get_user_avatar(user_id = user_data[1])
+            # if not os.path.exists(avatar_path):
+            try: os.remove(avatar_path)
+            except: pass
+            self.client.get_user_avatar(user_id = user_data[1])
             
             print(f"Loading avatar from: {avatar_path}")  # Отладочная информация
 
@@ -164,6 +169,61 @@ class App(object):
             )
         )
         self.txt_nickname_rp.place(relx = 0.89, rely = 0.28, anchor = CENTER)
+        
+        #buttons control user
+        self.btn_call = Rounded_Button(
+            self.root,
+            width = 70, height = 60,
+            radius = 10,
+            bg = "#14a859", fg = "gray9",
+            image_path = "client\\ui_components\\call.png",
+            image_size = (60, 50)
+        )
+        self.btn_call.place(relx = 0.83, rely = 0.35, anchor = CENTER)
+        
+        self.btn_blocked = Rounded_Button(
+            self.root,
+            width = 70, height = 60,
+            radius = 10,
+            bg = "red", fg = "gray9",
+            image_path = "client\\ui_components\\blocked.png",
+            image_size = (55, 45)
+        )
+        self.btn_blocked.place(relx = 0.89, rely = 0.35, anchor = CENTER)
+        
+        self.btn_complain = Rounded_Button(
+            self.root,
+            width = 70, height = 60,
+            radius = 10,
+            bg = "#8c3e01", fg = "gray9",
+            image_path = "client\\ui_components\\complain.png",
+            image_size = (55, 45)
+        )
+        self.btn_complain.place(relx = 0.95, rely = 0.35, anchor = CENTER)
+        
+        #описание
+        self.txt_description = Label(
+            self.root,
+            text = "Описание:",
+            bg = "gray9", fg = "white",
+            font = (
+            ui_config["fonts"][0],
+                16
+            )
+        )
+        self.txt_description.place(relx = 0.828, rely = 0.44, anchor = CENTER)
+        
+        self.user_description = Label(
+            self.root,
+            text = make_indents(user_data[8]) if user_data[8] != "None" else "Описание отсуствует...",
+            bg = "gray9", fg = "#a3a3a3",
+            font = (
+            ui_config["fonts"][0],
+                10
+            )
+        )
+        self.user_description.place(relx = 0.85, rely = 0.47, anchor = CENTER)
+            
             
     def open_chat_user(self, user_id: str) -> None:
         chat_data = self.client.get_chat(self.self_user_id, user_id)
@@ -309,6 +369,21 @@ class App(object):
             self.root,
             text = ui_config["title"]
         ).get().place(relx = 0.02, rely = 0.01, anchor = CENTER)
+        
+        #кнопка управления
+        img_control = Image.open("client\\ui_components\\setting.png")
+        img_control = img_control.resize((60, 60), Image.ANTIALIAS)  # Увеличение размера для теста
+        self.control_ui = ImageTk.PhotoImage(img_control)
+        
+        self.btn_control = Button(
+            self.root,
+            image = self.control_ui,
+            bg = "gray5", bd = 0
+        )
+        self.btn_control.place(relx = 0.027, rely = 0.075, anchor = CENTER)
+        
+        self.btn_control.bind("<Enter>", lambda event: event.widget.configure(bg = "gray9"))
+        self.btn_control.bind("<Leave>", lambda event: event.widget.configure(bg = "gray5"))
         
     def main(self) -> None:
         self.build()

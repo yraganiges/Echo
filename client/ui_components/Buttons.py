@@ -42,10 +42,15 @@ class Default_Button:
     def get(self) -> Button:
         return self.default_button
         
+from tkinter import Canvas, PhotoImage
+
+from tkinter import Canvas, PhotoImage
+from PIL import Image, ImageTk  # Импортируем необходимые классы из Pillow
+
 class Rounded_Button(Canvas):
     def __init__(
         self,
-        master = None,
+        master=None,
         text: str = "button",
         command: Any = None,
         radius: int = 10,
@@ -57,6 +62,8 @@ class Rounded_Button(Canvas):
         size: int = 12,
         back_color: str = None,
         command_func: Any = None,
+        image_path: str = None,  # Параметр для изображения
+        image_size: tuple = (50, 50),  # Параметр для размера изображения
         **kwargs
     ) -> None:
         super().__init__(master, **kwargs)
@@ -67,17 +74,26 @@ class Rounded_Button(Canvas):
         
         # Убираем рамки и устанавливаем фон
         self.config(
-            bg=self.master.cget('bg') if back_color == None else back_color,
+            bg=self.master.cget('bg') if back_color is None else back_color,
             highlightthickness=0,
-            width = width,
-            height = height
+            width=width,
+            height=height,
         )  
         
         self.create_rounded_rectangle(0, 0, self.winfo_reqwidth(), self.winfo_reqheight(), self.radius)
-        self.create_text(self.winfo_reqwidth()/2, self.winfo_reqheight()/2, text=text, fill=fg, font = (font, size))
         
-        if command_func != None:
-            self.bind("<Button - 1>", command_func)
+        # Создание текста
+        self.create_text(self.winfo_reqwidth()/2, self.winfo_reqheight()/2, text=text, fill=fg, font=(font, size))
+        
+        # Если указан путь к изображению, загружаем его и изменяем размер
+        if image_path:
+            original_image = Image.open(image_path)  # Открываем изображение с помощью Pillow
+            resized_image = original_image.resize(image_size, Image.ANTIALIAS)  # Изменяем размер изображения
+            self.image = ImageTk.PhotoImage(resized_image)  # Преобразуем в PhotoImage для Tkinter
+            self.create_image(width / 2, height / 2, image=self.image)  # Размещение изображения в центре кнопки
+        
+        if command_func is not None:
+            self.bind("<Button-1>", command_func)
         
     def create_rounded_rectangle(self, x1, y1, x2, y2, r) -> None:
         """Создание закругленного прямоугольника."""
@@ -87,6 +103,8 @@ class Rounded_Button(Canvas):
         self.create_arc(x2 - 2*r, y2 - 2*r, x2, y2, start=270, extent=90, fill=self.bg, outline="")
         self.create_rectangle(x1 + r, y1, x2 - r, y2, fill=self.bg, outline="")
         self.create_rectangle(x1, y1 + r, x2, y2 - r, fill=self.bg, outline="")
+
+
         
 if __name__ == "__main__":
     from tkinter import Tk, CENTER

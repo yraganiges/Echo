@@ -31,7 +31,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as conn:
 
     # Открытие потока для записи и воспроизведения
     stream = p.open(format=pyaudio.paInt16,
-                     channels=1,
+                     channels=2,
                      rate=44100,
                      input=True,
                      output=True)
