@@ -6,11 +6,11 @@ from ui_components.Buttons import Rounded_Button
 from PIL import Image, ImageTk
 from datetime import datetime
 from random import choice
+from typing import List
 
 from config import ui_config, app_config
 from client_requests import Client
 from databaser import Database
-
 from handlers import make_indents
 
 import os
@@ -33,7 +33,15 @@ class App(object):
         
         self.images = []
         self.added_users = []
+        self.labels = []
         self.x, self.y = 0.13, 0.1
+        
+    def hidden_contacts(self) -> None:
+        for label in self.labels:
+            label.destroy() 
+        self.labels.clear()
+
+        self.added_users.clear()
         
     def contacts_handler(self) -> None:
         for index in self.client.get_data_contacts(self_id = self.self_user_id):
@@ -107,15 +115,19 @@ class App(object):
                     except:
                         pass
 
-                    avatar_label = Label(
+                    self.avatar_label = Label(
                         self.root,
                         image=self.avatar if image is not None else "",
                         bg = "gray8"
                     )
-                    avatar_label.place(relx=self.x - 0.05, rely=self.y, anchor=CENTER)
+                    self.avatar_label.place(relx=self.x - 0.05, rely=self.y, anchor=CENTER)
                     
                     self.y += 0.08
                     self.added_users.append(user_data[1])
+                    self.labels.append(self.lbl)
+                    self.labels.append(self.txt_last_message)
+                    self.labels.append(self.txt_data_contact)
+                    self.labels.append(self.avatar_label)
 
                 except Exception as e:
                     print(f"Error loading image {avatar_path}: {e}")
@@ -378,7 +390,8 @@ class App(object):
         self.btn_control = Button(
             self.root,
             image = self.control_ui,
-            bg = "gray5", bd = 0
+            bg = "gray5", bd = 0,
+            command = self.hidden_contacts
         )
         self.btn_control.place(relx = 0.027, rely = 0.075, anchor = CENTER)
         
