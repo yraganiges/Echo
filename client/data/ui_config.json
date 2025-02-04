@@ -1,9 +1,12 @@
 {
-    "title": "Escord",
+    "title": "Echo",
     "window_color": "gray7",
     "fg_color": "white",
     "main_color": "#2c0661",
     "theme": "custom",
+
+    "self_messages_color": "#b5ace8",
+    "interlocutor_messages_color": "#736899",
 
     "fonts": [
         "Cascadia Mono SemiBold",

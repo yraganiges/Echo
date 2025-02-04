@@ -21,6 +21,22 @@ class Client:
         
         self.contacts_users_db = Database("client\\data\\contacts.db", table = "users")
         
+        
+    # def receive_message(self):
+    #     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as self.server:
+    #         self.server.connect((self.IP, self.port))
+    #         try:
+    #             data = self.server.recv(1024 ** 3) # Получаем данные от сервера
+                
+    #             if not data:
+    #                 return None
+                
+    #             message = data.decode('utf-8') # Декодируем и выводим сообщение
+    #             return message
+    #         except Exception as e:
+    #             print(f"Ошибка: {e}")
+    #             break
+        
     def accept_friend_request(self, sender_id: str) -> None:
         self.contacts_users_db.add_contact(sender_id)
         
@@ -73,7 +89,8 @@ class Client:
             data_handler(data = [self_user_id, interlocutor_id, "GET-CHAT"]).encode()
         )
 
-        server_data = self.server.recv(1024).decode() #data from server
+        try: server_data = self.server.recv(2097152).decode() #2мб #data from server
+        except: server_data = "None"
         
         if server_data != "None":
             return literal_eval(server_data)
@@ -107,6 +124,8 @@ class Client:
         data_from_user_id = (self.server.recv(1024)).decode()
         
         self.server.close()
+        if data_from_user_id[0:4] == "<er>":
+            return data_from_user_id #return error
         return data_from_user_id.split("$$")
 
     def send_message(self, message_data: dict[Any], type_message: str) -> None | str:

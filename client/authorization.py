@@ -8,7 +8,7 @@ from ui_components.Buttons import Default_Button, Rounded_Button
 from ui_components.Entry import GameDes_Entry
 from ui_components.Labels import Top_Field, Text
 
-from config import ui_config
+from config import ui_config, paths_config
 from PIL import Image, ImageTk
  
 from threading import Thread
@@ -24,7 +24,7 @@ class App(Tk):
         self.configure(bg = ui_config["window_color"])
         self.resizable(0, 0)
         
-        try: self.iconbitmap("icons\\main_icon.ico")
+        try: self.iconbitmap(paths_config["icon"])
         except: pass
         
     def go_to_sign_up(self):

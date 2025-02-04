@@ -3,15 +3,20 @@ from ui_components.Labels import Top_Field
 from ui_components.Entry import Default_Entry
 from ui_components.Buttons import Rounded_Button
 
+from threading import Thread
 from PIL import Image, ImageTk
 from datetime import datetime
 from random import choice
-from typing import List
+from typing import List, Any
+from time import sleep
 
-from config import ui_config, app_config
+from config import ui_config, app_config, paths_config
 from client_requests import Client
 from databaser import Database
 from handlers import make_indents
+
+import add_user
+import settings
 
 import os
 
@@ -23,7 +28,7 @@ class App(object):
         self.root.geometry("1640x920")
         self.root.configure(bg = ui_config["window_color"])
         
-        try: self.root.iconbitmap("icons\\main_icon.ico")
+        try: self.root.iconbitmap(paths_config["icon"])
         except: pass
         
         self.client = Client(IP = app_config["IP"], port = app_config["Port"])
@@ -33,17 +38,86 @@ class App(object):
         
         self.images = []
         self.added_users = []
-        self.labels = []
+        self.contact_labels = []
+        self.buttons_control = []
+        self.btn_control_status = False
+        
         self.x, self.y = 0.13, 0.1
         
-    def hidden_contacts(self) -> None:
-        for label in self.labels:
-            label.destroy() 
-        self.labels.clear()
-
-        self.added_users.clear()
+    def hidden_objects(self, objects: List[Any]) -> None:
+        for index in objects:
+            index.destroy() 
+        objects.clear()
+        
+    def show_control_buttons(
+        self,
+        buttons: List[List[str | Any]],
+    ) -> None:
+        y = 0.08
+        
+        for button in buttons:
+            self.btn_control_part = Rounded_Button(
+                self.root,
+                text = button[0],
+                width = 200, height = 50,
+                back_color = "gray12",
+                bg = "gray9" if button[2] is None else button[2], fg = "white",
+                size = 9,
+                command_func = button[1]
+            )
+            self.btn_control_part.place(relx = 0.13, rely = y, anchor = CENTER)
+            
+            self.buttons_control.append(self.btn_control_part)
+            y += 0.06
+            
+            self.btn_control.destroy()
+            del self.btn_control #на всякий
+            
+            self.btn_control = Button(
+                self.root,
+                image = self.control_ui,
+                bg = "gray5", bd = 0,
+                command = lambda: (
+                    self.hidden_objects(self.buttons_control),
+                    self.contacts_handler(),
+                )
+            )
+            self.btn_control.place(relx = 0.027, rely = 0.075, anchor = CENTER)
+            
+            self.y = 0.1
         
     def contacts_handler(self) -> None:
+        #Проверяем, были ли вскрыты контакты
+        if self.contact_labels == []:
+            self.added_users.clear()
+            
+        #останавливаем процесс, если у пользователя нету контактов и предлагаем добавить контакт
+        if self.client.get_data_contacts(self_id = self.self_user_id) is None:
+            self.txt = Label(
+                self.root,
+                text = "У вас нету ещё ни одного контакта...",
+                bg = "gray7", fg = "gray16",
+                font = (
+                    ui_config["fonts"][0],
+                    25
+                )
+            )
+            self.txt.place(relx = 0.55, rely = 0.45, anchor = CENTER)
+            
+            #кнопка добавить контакт
+            self.btn_add_contact = Rounded_Button(
+                self.root,
+                text = "Добавить контакт",
+                width = 200, height = 50,
+                back_color = "gray7",
+                bg = ui_config["main_color"], fg = "white",
+                size = 11,
+                command_func = self.window_add_user
+            )
+            self.btn_add_contact.place(relx = 0.55, rely = 0.55, anchor = CENTER)
+            
+            return 
+             
         for index in self.client.get_data_contacts(self_id = self.self_user_id):
             user_data = self.client.get_data_user(index[0])
             print(user_data)
@@ -95,12 +169,20 @@ class App(object):
                     )
                     self.txt_last_message.place(relx = self.x - 0.01, rely = self.y + 0.017, anchor = CENTER)
 
+                    
                     self.lbl.bind("<Enter>", lambda event: event.widget.configure(bg="gray10"))
                     self.lbl.bind("<Leave>", lambda event: event.widget.configure(bg="#1e1f1e"))
                     self.lbl.bind(
                         "<Button - 1>", lambda event: (
                             self.open_chat_user(event.widget["text"]),
-                            self.load_right_part(event.widget["text"])
+                            self.load_contact_info(event.widget["text"]),
+                            
+                            self.stop_receiving_messages(),
+                            self.stop_receiving_messages(),
+                            Thread(
+                                daemon = True,
+                                target = lambda: self.receiving_messages(event.widget["text"])
+                            ).start()
                         )
                     )
                     
@@ -122,21 +204,82 @@ class App(object):
                     )
                     self.avatar_label.place(relx=self.x - 0.05, rely=self.y, anchor=CENTER)
                     
+                    #кнопка управления
+                    img_control = Image.open("client\\ui_components\\setting.png")
+                    img_control = img_control.resize((60, 60), Image.ANTIALIAS)  # Увеличение размера для теста
+                    self.control_ui = ImageTk.PhotoImage(img_control)
+                    
+                    self.btn_control = Button(
+                        self.root,
+                        image = self.control_ui,
+                        bg = "gray5", bd = 0,
+                        command = lambda: (
+                            self.hidden_objects(self.contact_labels),
+                            self.show_control_buttons(
+                                buttons = [
+                                    ("Настройки", lambda event: settings.App().main(), None),
+                                    ("Редактировать профиль", ..., None),
+                                    ("Добавить контакт", self.window_add_user, "#1d2b1c"),
+                                    ("Создать группу", ..., "#10151a"),
+                                    ("Создать сообщество", ..., "#10151a")
+                                ]
+                            )
+                        )
+                    )
+                    self.btn_control.place(relx = 0.027, rely = 0.075, anchor = CENTER)
+                    self.btn_control.bind("<Enter>", lambda event: event.widget.configure(bg = "gray9"))
+                    self.btn_control.bind("<Leave>", lambda event: event.widget.configure(bg = "gray5"))
+                    
                     self.y += 0.08
                     self.added_users.append(user_data[1])
-                    self.labels.append(self.lbl)
-                    self.labels.append(self.txt_last_message)
-                    self.labels.append(self.txt_data_contact)
-                    self.labels.append(self.avatar_label)
+                    self.contact_labels.append(self.lbl)
+                    self.contact_labels.append(self.txt_last_message)
+                    self.contact_labels.append(self.txt_data_contact)
+                    self.contact_labels.append(self.avatar_label)
 
                 except Exception as e:
                     print(f"Error loading image {avatar_path}: {e}")
     
-    #правая часть
-    def load_right_part(self, user_id: str) -> None:
+    #информация о контакте
+    def load_contact_info(self, user_id: str) -> None:
         user_data = self.client.get_data_user(user_id)
         colors = ["#120909", "#0e0b14", "#211a24", "#241f1f"]
         
+        """ -- Верхняя часть --"""
+        self.top_lbl = Label(
+            self.root,
+            width = 134, height = 4,
+            bg = "gray9"
+        )
+        self.top_lbl.place(relx = 0.495, rely = 0.05, anchor = CENTER)
+        
+        #никнейм
+        self.txt_nickname_up = Label(
+            self.root,
+            text = user_data[0], #nickname
+            bg = "gray9", fg = "white",
+            font = (
+                ui_config["fonts"][0],
+                13
+            ),
+            anchor = "w"
+        )
+        self.txt_nickname_up.place(relx = 0.28 - len(user_data[0]) // 20 - 0.03, rely = 0.04, anchor = CENTER)
+        
+        #статус сети
+        self.txt_online_status = Label(
+            self.root,
+            text = "не в сети" if user_data[5] == "None" or user_data[5] is False else "в сети",
+            bg = "gray9", fg = "#5b5266",
+            font = (
+                ui_config["fonts"][1],
+                9
+            ),
+            anchor = "w"
+        )
+        self.txt_online_status.place(relx = 0.235 - len(user_data[0]) // 20, rely = 0.065, anchor = CENTER)
+        
+        """ -- Правая часть -- """
         #аватар пользователя
         try:
             img_logo = Image.open(f"client\\user_avatars\\{user_data[1]}.png")
@@ -212,7 +355,7 @@ class App(object):
             image_size = (55, 45)
         )
         self.btn_complain.place(relx = 0.95, rely = 0.35, anchor = CENTER)
-        
+         
         #описание
         self.txt_description = Label(
             self.root,
@@ -235,7 +378,43 @@ class App(object):
             )
         )
         self.user_description.place(relx = 0.85, rely = 0.47, anchor = CENTER)
+       
+    def stop_receiving_messages(self) -> None:
+        self.is_checking_messages = False       
+       
+    def receiving_messages(self, user_id: str) -> None:
+        print(1111111111)
+        self.is_checking_messages = True
+        
+        while self.is_checking_messages:
+            try:
+                self.server_chat = self.client.get_chat(self.self_user_id, user_id)
+                self.chat = self.chat_display.get("1.0", END).rstrip().split("\n")
             
+                if self.server_chat[-1][2] != self.chat[-2][1:-1]: #проверяем время
+                    user_nickname = self.client.get_data_user(user_id = self.server_chat[-1][3])[0]
+                    info = f"\n\n<{self.server_chat[-1][2]}>\n{user_nickname}: {self.server_chat[-1][0]}"
+                
+                    self.chat_display.insert(
+                        END, info,
+                        "you" if self.server_chat[-1][3] == self.self_user_id else "interlocutor"
+                    )
+                    
+                    self.chat_display.tag_config("you", foreground = ui_config["self_messages_color"])
+                    self.chat_display.tag_config("interlocutor", foreground = ui_config["interlocutor_messages_color"])
+                    self.chat_display.see(END) #Прокручиваем к концу
+                    
+                    sleep(1)
+            except:
+                self.is_checking_messages = False
+                break
+        else:
+            self.is_checking_messages = False
+        self.is_checking_messages = False 
+                
+    def window_add_user(self, event) -> None:
+        self.root.destroy()
+        add_user.App(self.self_user_id).main() #run file
             
     def open_chat_user(self, user_id: str) -> None:
         chat_data = self.client.get_chat(self.self_user_id, user_id)
@@ -251,7 +430,7 @@ class App(object):
         self.chat_display = scrolledtext.ScrolledText(
             self.root,
             state = "normal", #disabled
-            width = 100, height = 40,
+            width = 100, height = 38,
             bg = "gray7", fg = "white",
             bd = 0,
             font = (
@@ -259,26 +438,27 @@ class App(object):
                 12
             )
         )        
-        self.chat_display.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+        self.chat_display.place(relx = 0.5, rely = 0.48, anchor = CENTER)
         
         if chat_data != None:
             for index in chat_data:
                 
-                info = f"<{str(index[2])}>\n"
+                info = f"\n\n<{str(index[2])}>\n"
                 if index[3] == self.self_user_id:
                     info += "Вы: "
                 else:
-                    info += self.client.get_data_user(index[3])[0]
+                    info += self.client.get_data_user(index[3])[0] + ": "
                 
-                info += str(index[0]).strip() + "\n\n" #добавляем сообщение пользователя
+                info += str(index[0]).strip() #добавляем сообщение пользователя
                 
                 self.chat_display.insert(
                     END, info,
                     "you" if index[3] == self.self_user_id else "interlocutor"
                 )
                 
-            self.chat_display.tag_config("you", foreground = "#b5ace8")
-            self.chat_display.tag_config("interlocutor", foreground = "#c1ace8")
+            self.chat_display.tag_config("you", foreground = ui_config["self_messages_color"])
+            self.chat_display.tag_config("interlocutor", foreground = ui_config["interlocutor_messages_color"])
+            self.chat_display.see(END) #Прокручиваем к концу
         else:
             self.txt_not_chat = Label(
                 self.root,
@@ -290,7 +470,16 @@ class App(object):
                 )
             )
             self.txt_not_chat.place(relx = 0.48, rely = 0.5, anchor = CENTER)
-    
+
+        self.entry_field = Rounded_Button(
+            self.root,
+            bg = "gray18", back_color = "gray7",
+            width = 830, height = 30,
+            text = "",
+            size = 30
+        )
+        self.entry_field.place(relx = 0.48, rely = 0.95, anchor = CENTER)
+        
         self.entry_message = Default_Entry(
             self.root,
             text = "Введите сообщение...",
@@ -301,7 +490,7 @@ class App(object):
             font = ui_config["fonts"][0],
             size = 13
         ).get()
-        self.entry_message.place(relx = 0.48, rely = 0.95, anchor = CENTER)
+        self.entry_message.place(relx = 0.475, rely = 0.95, anchor = CENTER)
         
         img_send_message = Image.open("client\\ui_components\\send_message.png")
         img_send_message = img_send_message.resize((30, 30), Image.ANTIALIAS)
@@ -343,9 +532,10 @@ class App(object):
         self.client.send_message(message_data, "text")
         self.chat_display.insert(
             END, 
-            f"<{now_time}>\nВы: {message}\n\n",
+            f"\n\n<{now_time}>\nВы: {message}",
             "you",
         ) #добавляем сообщение в чат дисплей
+        self.chat_display.see(END)
         
         #удаляем текст о начале переписки, если оно имелось
         try: self.txt_not_chat.destroy() 
@@ -381,22 +571,6 @@ class App(object):
             self.root,
             text = ui_config["title"]
         ).get().place(relx = 0.02, rely = 0.01, anchor = CENTER)
-        
-        #кнопка управления
-        img_control = Image.open("client\\ui_components\\setting.png")
-        img_control = img_control.resize((60, 60), Image.ANTIALIAS)  # Увеличение размера для теста
-        self.control_ui = ImageTk.PhotoImage(img_control)
-        
-        self.btn_control = Button(
-            self.root,
-            image = self.control_ui,
-            bg = "gray5", bd = 0,
-            command = self.hidden_contacts
-        )
-        self.btn_control.place(relx = 0.027, rely = 0.075, anchor = CENTER)
-        
-        self.btn_control.bind("<Enter>", lambda event: event.widget.configure(bg = "gray9"))
-        self.btn_control.bind("<Leave>", lambda event: event.widget.configure(bg = "gray5"))
         
     def main(self) -> None:
         self.build()

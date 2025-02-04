@@ -12,7 +12,7 @@ class User_ID:
         output: str = ""
         
         for _ in range(length):
-            if random.choice(("num", "lett")) == "num":
+            if random.choice(("num", "lett")) == "num" and len(output) >= 1:
                 output += str(random.choice(list(range(0, 10))))
             else:
                 output += random.choice("qwertyuiopasdfghjklzxcvbnm")
@@ -115,19 +115,21 @@ class Database(object):
         
         # Проверяем существование таблицы
         if not self.check_table_exists(table_name):
-            try:
-                self.cursor.execute( # Создаем таблицу
-                    f"""CREATE TABLE {table_name} (
-                        data_message TEXT,
-                        type_message TEXT,
-                        time_send_message TEXT,
-                        sender_id TEXT,
-                        receiver_id TEXT
-                    )"""
-                )
-                self.db.commit()  # Сохраняем изменения
-            except Exception as e:
-                return f"<er>:Error creating table: {str(e)}"
+            table_name = f"{to_whom_message}$$${sender_id}"
+            if not self.check_table_exists(table_name): #снова пробуем, если нету, то создаём табл
+                try:
+                    self.cursor.execute( # Создаем таблицу
+                        f"""CREATE TABLE {table_name} (
+                            data_message TEXT,
+                            type_message TEXT,
+                            time_send_message TEXT,
+                            sender_id TEXT,
+                            receiver_id TEXT
+                        )"""
+                    )
+                    self.db.commit()  # Сохраняем изменения
+                except Exception as e:
+                    return f"<er>:Error creating table: {str(e)}"
         
         # Проверяем длину сообщения и тип сообщения
         if ((len(data_message) <= app_conf["max_length_message"]) and (type_message == "text")) or (type_message != "text"):
@@ -210,12 +212,5 @@ if __name__ == "__main__":
     # print(db.get_all_data()) 
     # print(db.table_data_count())
     
-    chat_db = Database(
-        database = "server\\data\\messages.db",
-        table = "dzyg0n546z58854o$$j8sr7k5393461e13"
-    )
-    print(chat_db.get_all_data()) 
-    """[
-        ('Здаров, как дела?', 'text', '21:36 05.01.2025'),
-        ('Здаров, как дела?', 'text', '21:36 05.01.2025')
-    ]"""
+    # db = Database("server\\data\\accounts.db", "users")
+    # print(db.get_all_data())

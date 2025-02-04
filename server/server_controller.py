@@ -43,7 +43,7 @@ class Server(object):
             while self.status_run_server():
                 try:
                     connect, add = self.serv.accept() #Ждём запросы от клиента
-                    client_user = (connect.recv(1024)).decode() #декодируем запрос от клиента, если запрос поступил на сервер
+                    client_user = (connect.recv(2097152)).decode() #декодируем запрос от клиента, если запрос поступил на сервер
                     self.users.append(tuple(client_user.split("$$"))) #Добавляем данные пользователя, подключившегося к серверу в список данных пользователей 
                     
                     print(client_user)
@@ -106,10 +106,12 @@ class Server(object):
                         
                     if user_data[-1] == "GET-USER-DATA":
                         #Передаём данные пользователя обратно клиенту
-                        print(self.accounts_db.get_data_user(user_data[0]))
-                        connect.sendall(
-                            (data_handler(self.accounts_db.get_data_user(user_data[0]))).encode()
-                        )
+                        if self.accounts_db.get_data_user(user_data[0]) is None:
+                            connect.sendall("<er>:user is not found".encode())
+                        else:
+                            connect.sendall(
+                                (data_handler(self.accounts_db.get_data_user(user_data[0]))).encode()
+                            )
                         
                     if user_data[-1] == "GET-CHAT":
                         
@@ -138,10 +140,13 @@ class Server(object):
                             user_data[0]
                         )
                         
-                        #Передаём данные чата
-                        connect.sendall(
-                            str(self.contacts_db.get_all_data()).encode()
-                        )
+                        if self.contacts_db.check_table_exists() is True:
+                            #Передаём данные чата
+                            connect.sendall(
+                                str(self.contacts_db.get_all_data()).encode()
+                            )
+                        else:
+                            connect.send("None".encode())
                                             
                         
                     if user_data[-1] == "SEND-FRIEND-REQUEST":

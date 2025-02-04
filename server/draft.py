@@ -45,39 +45,63 @@
 # if __name__ == "__main__":
 #     main()
 
+# import tkinter as tk
+# from tkinter import scrolledtext
+# from PIL import Image, ImageTk
+
+# def insert_image(text_widget: scrolledtext, image_path: str) -> None:
+#     # Открываем изображение
+#     img = Image.open(image_path)
+#     img = img.resize((100, 100), Image.ANTIALIAS)  # Измените размер по необходимости
+#     photo = ImageTk.PhotoImage(img)
+
+#     # Вставляем изображение в текстовый виджет
+    
+#     text_widget.image_create(tk.END, image=photo)
+    
+#     # Сохраняем ссылку на изображение, чтобы оно не удалилось из памяти
+#     text_widget.image = photo
+
+# # Создаем главное окно
+# root = tk.Tk()
+# root.title("ScrolledText with Image")
+
+# # Создаем ScrolledText
+# text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=40, height=10)
+# text_area.pack(padx=10, pady=10)
+
+# # Вставляем текст
+# text_area.insert(tk.END, "Вот изображение ниже:\n\n")
+
+# # Вставляем изображение
+# insert_image(text_area, "server\\avatars\\test_image.png")  # Укажите путь к вашему изображению
+
+# # Запускаем главный цикл
+# root.mainloop()
+
 import tkinter as tk
 from tkinter import scrolledtext
-from PIL import Image, ImageTk
 
-def insert_image(text_widget: scrolledtext, image_path: str) -> None:
-    # Открываем изображение
-    img = Image.open(image_path)
-    img = img.resize((100, 100), Image.ANTIALIAS)  # Измените размер по необходимости
-    photo = ImageTk.PhotoImage(img)
-
-    # Вставляем изображение в текстовый виджет
-    
-    text_widget.image_create(tk.END, image=photo)
-    
-    # Сохраняем ссылку на изображение, чтобы оно не удалилось из памяти
-    text_widget.image = photo
+def get_text():
+    # Получаем текст из ScrolledText
+    text = scrolled_text.get("1.0", tk.END)  # Получаем текст с первой строки до конца
+    print(text.rstrip().split("\n"))
 
 # Создаем главное окно
 root = tk.Tk()
-root.title("ScrolledText with Image")
+root.title("ScrolledText Example")
 
 # Создаем ScrolledText
-text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=40, height=10)
-text_area.pack(padx=10, pady=10)
+scrolled_text = scrolledtext.ScrolledText(root, width=40, height=10)
+scrolled_text.pack()
 
-# Вставляем текст
-text_area.insert(tk.END, "Вот изображение ниже:\n\n")
-
-# Вставляем изображение
-insert_image(text_area, "server\\avatars\\test_image.png")  # Укажите путь к вашему изображению
+# Кнопка для получения текста
+get_text_button = tk.Button(root, text="Получить текст", command=get_text)
+get_text_button.pack()
 
 # Запускаем главный цикл
 root.mainloop()
+
 
 
 

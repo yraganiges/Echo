@@ -8,7 +8,7 @@ from ui_components.Buttons import Default_Button, Rounded_Button
 from ui_components.Entry import GameDes_Entry
 from ui_components.Labels import Top_Field, Text
 
-from config import ui_config, app_config
+from config import ui_config, app_config, paths_config
 from PIL import Image, ImageTk
 
 from client_requests import Client
@@ -25,7 +25,7 @@ class App(Toplevel):
         self.configure(bg = ui_config["window_color"])
         self.resizable(1, 1)
     
-        try: self.iconbitmap("icons\\main_icon.ico")
+        try: self.iconbitmap(paths_config["icon"])
         except: pass
         
     def back_to_authorization(self) -> None:
@@ -144,7 +144,6 @@ class App(Toplevel):
             "<Button - 1>", lambda event: Thread(daemon = True, target = self.back_to_authorization).start()
         )
 
-        
     def main(self) -> None:
         self.build()
         try: self.mainloop()
