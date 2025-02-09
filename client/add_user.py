@@ -14,14 +14,22 @@ class App(Tk):
         self.title("Добавить пользователя")
         self.geometry("550x300")
         self.configure(bg = ui_config["window_color"])
+        self.protocol("WM_DELETE_WINDOW", self.on_closing_window) 
         self.resizable(1, 1)
         
         self.client = Client(app_config["IP"], app_config["Port"])
         
         self.self_id = self_id
+        
+        self.main_app = main.App(self.self_id)
+        self.main_app.close_main_window()
     
         try: self.iconbitmap(paths_config["icon"])
         except: pass
+        
+    def on_closing_window(self) -> None:
+        self.destroy()
+        self.main_app.main()
         
     def add_contact(self) -> bool:
         try: self.txt_add_status.destroy()
@@ -51,7 +59,8 @@ class App(Tk):
         if self.txt_add_contact_status[-1] != "!":
             self.client.add_contact(self.self_id, user_id)
             self.destroy()
-            main.App(self.self_id).main()
+            
+            self.main_app.main()
             
         
     def build(self) -> None:

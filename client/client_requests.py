@@ -121,12 +121,33 @@ class Client:
         self.server.send(data_handler(data=[user_id, "GET-USER-DATA"]).encode())
     
         # Получение данных от сервера
-        data_from_user_id = (self.server.recv(1024)).decode()
+        # try: data_from_user_id = (self.server.recv(1024 * 2)).decode()
+        # except: data_from_user_id = None
+        data_from_user_id = (self.server.recv(1024 * 2)).decode()
         
         self.server.close()
+        # if data_from_user_id == None: #debug
+        #     return "None"
         if data_from_user_id[0:4] == "<er>":
             return data_from_user_id #return error
         return data_from_user_id.split("$$")
+    
+    def get_user_id_by_nickname(self, user_nickname: str) -> str:
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        try:
+            self.server.connect((self.IP, self.port))
+        except Exception as e:
+            return f"connect_error: {str(e)}"
+        
+        self.server.send(data_handler([user_nickname, "GET-USER-ID"]).encode())
+        
+        user_id = self.server.recv(1024).decode()
+        
+        if user_id == "None":
+            return None
+        return user_id
+
 
     def send_message(self, message_data: dict[Any], type_message: str) -> None | str:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

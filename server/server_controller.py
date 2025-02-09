@@ -104,6 +104,16 @@ class Server(object):
                     print(user_data[-1])
                     print(user_data[-1] == "GET-USER-DATA")                        
                         
+                    if user_data[-1] == "GET-USER-ID":
+                        status = False
+                        for index in self.accounts_db.get_all_data():
+                            if user_data[0] == index[0]:
+                                connect.send(index[1].encode()) #send user id
+                                status = True
+                        if status == False:
+                            connect.send("None".encode())
+                        
+                        
                     if user_data[-1] == "GET-USER-DATA":
                         #Передаём данные пользователя обратно клиенту
                         if self.accounts_db.get_data_user(user_data[0]) is None:

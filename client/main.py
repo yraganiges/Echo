@@ -178,11 +178,11 @@ class App(object):
                             self.load_contact_info(event.widget["text"]),
                             
                             self.stop_receiving_messages(),
-                            self.stop_receiving_messages(),
                             Thread(
                                 daemon = True,
                                 target = lambda: self.receiving_messages(event.widget["text"])
-                            ).start()
+                            ).start(),
+                            self.stop_receiving_messages(),
                         )
                     )
                     
@@ -387,12 +387,21 @@ class App(object):
         self.is_checking_messages = True
         
         while self.is_checking_messages:
+            # print(self.client.get_data_user(user_id = self.self_user_id)[0])
+           
             try:
                 self.server_chat = self.client.get_chat(self.self_user_id, user_id)
                 self.chat = self.chat_display.get("1.0", END).rstrip().split("\n")
-            
-                if self.server_chat[-1][2] != self.chat[-2][1:-1]: #проверяем время
-                    user_nickname = self.client.get_data_user(user_id = self.server_chat[-1][3])[0]
+                
+                user_nickname = self.client.get_data_user(user_id = self.server_chat[-1][3])[0]
+                self_nickname = self.client.get_data_user(user_id = self.self_user_id)[0]
+                
+                print(self.chat[-2][1:-1])
+                print(self_nickname)
+                print(user_nickname)
+                
+                #проверяем время и никнейм
+                if self.server_chat[-1][2] != self.chat[-2][1:-1] and self_nickname != user_nickname: 
                     info = f"\n\n<{self.server_chat[-1][2]}>\n{user_nickname}: {self.server_chat[-1][0]}"
                 
                     self.chat_display.insert(
@@ -403,17 +412,15 @@ class App(object):
                     self.chat_display.tag_config("you", foreground = ui_config["self_messages_color"])
                     self.chat_display.tag_config("interlocutor", foreground = ui_config["interlocutor_messages_color"])
                     self.chat_display.see(END) #Прокручиваем к концу
-                    
-                    sleep(1)
+                       
             except:
-                self.is_checking_messages = False
-                break
-        else:
-            self.is_checking_messages = False
+                pass
+            
+            sleep(2)
         self.is_checking_messages = False 
                 
     def window_add_user(self, event) -> None:
-        self.root.destroy()
+        # self.root.destroy()
         add_user.App(self.self_user_id).main() #run file
             
     def open_chat_user(self, user_id: str) -> None:
@@ -441,13 +448,14 @@ class App(object):
         self.chat_display.place(relx = 0.5, rely = 0.48, anchor = CENTER)
         
         if chat_data != None:
+            sender_nickname = self.client.get_data_user(chat_data[0][3])[0]
             for index in chat_data:
                 
                 info = f"\n\n<{str(index[2])}>\n"
                 if index[3] == self.self_user_id:
                     info += "Вы: "
                 else:
-                    info += self.client.get_data_user(index[3])[0] + ": "
+                    info += sender_nickname + ": "
                 
                 info += str(index[0]).strip() #добавляем сообщение пользователя
                 
@@ -459,6 +467,8 @@ class App(object):
             self.chat_display.tag_config("you", foreground = ui_config["self_messages_color"])
             self.chat_display.tag_config("interlocutor", foreground = ui_config["interlocutor_messages_color"])
             self.chat_display.see(END) #Прокручиваем к концу
+        
+
         else:
             self.txt_not_chat = Label(
                 self.root,
@@ -515,9 +525,9 @@ class App(object):
         self.btn_send_message.bind(
             "<Leave>", lambda event: self.btn_send_message.configure(bg = "gray32")
         )
-    
+            
     def send_text_message(self, message: str, sender_id: str, receiver_id: str) -> None:
-        now_time = datetime.now().strftime("%H:%M %Y-%m-%d")
+        now_time = datetime.now().strftime("%H:%M:%S %Y-%m-%d")
         
         if message.lower().strip() == "введите сообщение..." or message.strip() == "":
             return
@@ -572,10 +582,17 @@ class App(object):
             text = ui_config["title"]
         ).get().place(relx = 0.02, rely = 0.01, anchor = CENTER)
         
+    def close_main_window(self) -> None:
+        self.root.destroy()
+        
     def main(self) -> None:
         self.build()
         self.contacts_handler()
         self.root.mainloop()
         
 if __name__ == "__main__": 
-    App("dzyg0n546z58854o").main()
+    # App("dzyg0n546z58854o").main()
+    
+    Thread(target = App("dzyg0n546z58854o").main())
+    # Thread(target = App("f72b2z06j94x0xm8").main())
+    

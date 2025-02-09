@@ -13,6 +13,7 @@ from PIL import Image, ImageTk
 
 from client_requests import Client
 import authorization as auth
+import main
 
 from typing import Any
 from threading import Thread
@@ -56,6 +57,15 @@ class App(Toplevel):
                     entry_mail_data
                 ]
             )
+            
+            #run main window
+            Thread(
+                target = lambda: main.App(
+                    user_id = client.get_user_id_by_nickname(entry_nickname_data)
+                ).main() 
+            ).start()
+           
+            
         else:
             msg.showerror("ошибка данных", "Вы заполнили не все данные либо ввели их неправильно")
             
