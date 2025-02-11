@@ -3,10 +3,9 @@ from ui_components.Labels import Top_Field
 from ui_components.Entry import Default_Entry
 from ui_components.Buttons import Rounded_Button
 
-from threading import Thread
+from threading import Thread, Event
 from PIL import Image, ImageTk
 from datetime import datetime
-from random import choice
 from typing import List, Any
 from time import sleep
 
@@ -32,8 +31,9 @@ class App(object):
         except: pass
         
         self.client = Client(IP = app_config["IP"], port = app_config["Port"])
-        self.users_db = Database("client\\data\\contacts.db", "users")
+        self.users_db = Database(paths_config["contacts_db"], "users")
         
+        self.stop_event = Event()
         self.self_user_id = user_id
         
         self.images = []
@@ -42,7 +42,9 @@ class App(object):
         self.buttons_control = []
         self.btn_control_status = False
         
+        
         self.x, self.y = 0.13, 0.1
+        
         
     def hidden_objects(self, objects: List[Any]) -> None:
         for index in objects:
@@ -91,15 +93,30 @@ class App(object):
         if self.contact_labels == []:
             self.added_users.clear()
             
+        contacts_data = self.client.get_data_contacts(self_id = self.self_user_id)    
+            
         #останавливаем процесс, если у пользователя нету контактов и предлагаем добавить контакт
-        if self.client.get_data_contacts(self_id = self.self_user_id) is None:
+        if contacts_data is None:
+            #1-й текст
             self.txt = Label(
                 self.root,
-                text = "У вас нету ещё ни одного контакта...",
+                text = "У вас нету ещё ни одного контакта",
                 bg = "gray7", fg = "gray16",
                 font = (
                     ui_config["fonts"][0],
                     25
+                )
+            )
+            self.txt.place(relx = 0.55, rely = 0.385, anchor = CENTER)
+            
+            #2-й текст
+            self.txt = Label(
+                self.root,
+                text = f"Ваш id: {self.self_user_id} \nс помощью него вас смогут добавить в друзья",
+                bg = "gray7", fg = "gray16",
+                font = (
+                    ui_config["fonts"][0],
+                    15
                 )
             )
             self.txt.place(relx = 0.55, rely = 0.45, anchor = CENTER)
@@ -118,11 +135,11 @@ class App(object):
             
             return 
              
-        for index in self.client.get_data_contacts(self_id = self.self_user_id):
+        for index in contacts_data:
             user_data = self.client.get_data_user(index[0])
             print(user_data)
 
-            avatar_path = f"client\\user_avatars\\{user_data[1]}.png"
+            avatar_path = f'{paths_config["user_avatars_folder"]}\\{user_data[1]}.png'
             
             #проверка существования аватара в директории
             # if not os.path.exists(avatar_path):
@@ -134,7 +151,7 @@ class App(object):
 
             if user_data[1] not in self.added_users:        
                 try:
-                    image_ui = Image.open("client\\ui_components\\RoundedLabel_2.png")
+                    image_ui = Image.open(f'{paths_config["ui_components_folder"]}\\RoundedLabel_2.png')
                     image_ui = image_ui.resize((245, 70), Image.ANTIALIAS)  # Увеличение размера для теста
                     self.rounded_label = ImageTk.PhotoImage(image_ui)
                     self.images.append(self.rounded_label)
@@ -179,10 +196,12 @@ class App(object):
                             
                             self.stop_receiving_messages(),
                             Thread(
-                                daemon = True,
-                                target = lambda: self.receiving_messages(event.widget["text"])
+                                daemon = None,
+                                target = self.receiving_messages,
+                                args=(event.widget["text"],)
                             ).start(),
                             self.stop_receiving_messages(),
+                            # Thread(target = self.stop_receiving_messages).start(),
                         )
                     )
                     
@@ -205,7 +224,7 @@ class App(object):
                     self.avatar_label.place(relx=self.x - 0.05, rely=self.y, anchor=CENTER)
                     
                     #кнопка управления
-                    img_control = Image.open("client\\ui_components\\setting.png")
+                    img_control = Image.open(f'{paths_config["ui_components_folder"]}\\setting.png')
                     img_control = img_control.resize((60, 60), Image.ANTIALIAS)  # Увеличение размера для теста
                     self.control_ui = ImageTk.PhotoImage(img_control)
                     
@@ -217,7 +236,9 @@ class App(object):
                             self.hidden_objects(self.contact_labels),
                             self.show_control_buttons(
                                 buttons = [
-                                    ("Настройки", lambda event: settings.App().main(), None),
+                                    ("Настройки", lambda event: settings.App(
+                                        (self.root.winfo_x(), self.root.winfo_y())     
+                                    ).main(), None),
                                     ("Редактировать профиль", ..., None),
                                     ("Добавить контакт", self.window_add_user, "#1d2b1c"),
                                     ("Создать группу", ..., "#10151a"),
@@ -282,7 +303,7 @@ class App(object):
         """ -- Правая часть -- """
         #аватар пользователя
         try:
-            img_logo = Image.open(f"client\\user_avatars\\{user_data[1]}.png")
+            img_logo = Image.open(f'{paths_config["user_avatars_folder"]}\\{user_data[1]}.png')
             img_logo = img_logo.resize((120, 120), Image.ANTIALIAS) 
             self.img_logo = ImageTk.PhotoImage(img_logo)
         except:
@@ -331,7 +352,7 @@ class App(object):
             width = 70, height = 60,
             radius = 10,
             bg = "#14a859", fg = "gray9",
-            image_path = "client\\ui_components\\call.png",
+            image_path = f'{paths_config["ui_components_folder"]}\\call.png',
             image_size = (60, 50)
         )
         self.btn_call.place(relx = 0.83, rely = 0.35, anchor = CENTER)
@@ -341,7 +362,7 @@ class App(object):
             width = 70, height = 60,
             radius = 10,
             bg = "red", fg = "gray9",
-            image_path = "client\\ui_components\\blocked.png",
+            image_path = f'{paths_config["ui_components_folder"]}\\blocked.png',
             image_size = (55, 45)
         )
         self.btn_blocked.place(relx = 0.89, rely = 0.35, anchor = CENTER)
@@ -351,7 +372,7 @@ class App(object):
             width = 70, height = 60,
             radius = 10,
             bg = "#8c3e01", fg = "gray9",
-            image_path = "client\\ui_components\\complain.png",
+            image_path = f'{paths_config["ui_components_folder"]}\\complain.png',
             image_size = (55, 45)
         )
         self.btn_complain.place(relx = 0.95, rely = 0.35, anchor = CENTER)
@@ -380,16 +401,24 @@ class App(object):
         self.user_description.place(relx = 0.85, rely = 0.47, anchor = CENTER)
        
     def stop_receiving_messages(self) -> None:
+        self.stop_event.set()  # Устанавливаем флаг остановки
         self.is_checking_messages = False       
        
     def receiving_messages(self, user_id: str) -> None:
         print(1111111111)
         self.is_checking_messages = True
         
-        while self.is_checking_messages:
+        self.stop_event.clear() #Сбрасываем флаг остановки
+        self.stop_event.clear()
+        print(self.is_checking_messages, not self.stop_event.is_set())
+        print((self.is_checking_messages) and (not(self.stop_event.is_set())))
+    
+        
+        while self.is_checking_messages and not self.stop_event.is_set():
             # print(self.client.get_data_user(user_id = self.self_user_id)[0])
-           
+            print("Loop is started!")
             try:
+                print("rm")
                 self.server_chat = self.client.get_chat(self.self_user_id, user_id)
                 self.chat = self.chat_display.get("1.0", END).rstrip().split("\n")
                 
@@ -414,10 +443,22 @@ class App(object):
                     self.chat_display.see(END) #Прокручиваем к концу
                        
             except:
-                pass
+                print("PASS PASS PASS")
+                self.stop_event.set()
+                break
             
             sleep(2)
+        else:
+            print("Loop is not started!")
+            Thread(
+                daemon = None,
+                target = self.receiving_messages,
+                args=(user_id,)
+            ).start(),
+            
+            
         self.is_checking_messages = False 
+        self.stop_event.set()
                 
     def window_add_user(self, event) -> None:
         # self.root.destroy()
@@ -502,7 +543,7 @@ class App(object):
         ).get()
         self.entry_message.place(relx = 0.475, rely = 0.95, anchor = CENTER)
         
-        img_send_message = Image.open("client\\ui_components\\send_message.png")
+        img_send_message = Image.open(f'{paths_config["ui_components_folder"]}\\send_message.png')
         img_send_message = img_send_message.resize((30, 30), Image.ANTIALIAS)
         self.img_send_message = ImageTk.PhotoImage(img_send_message)
         # self.images.append(self.avatar)
@@ -593,6 +634,10 @@ class App(object):
 if __name__ == "__main__": 
     # App("dzyg0n546z58854o").main()
     
-    Thread(target = App("dzyg0n546z58854o").main())
-    # Thread(target = App("f72b2z06j94x0xm8").main())
+    Thread(target = App("dzyg0n546z58854o").main()) #test11
+    # Thread(target = App("f72b2z06j94x0xm8").main()) #Коклеш
+    # Thread(target = App("ego07n52hx2u7q5m").main()) #пiпiдастр
+    # Thread(target = App("ei3284i0wuyw24o2").main()) #Волтер Уайт
+    # Thread(target = App("bbx90n9it00b0vgs").main()) 
+    
     

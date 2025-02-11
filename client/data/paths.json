@@ -1,3 +1,10 @@
 {
-    "icon": "client\\icons\\main_icon.ico"
+    "icon": "client\\icons\\main_icon.ico",
+    "app_config": "client\\data\\app_config.json",
+    "ui_config": "client\\data\\ui_config.json",
+    "contacts_db": "client\\data\\contacts.db",
+    "local_data_db": "client\\data\\local_data.db",
+    "servers_db": "client\\data\\servers.db",
+    "ui_components_folder": "client\\ui_components",
+    "user_avatars_folder": "client\\user_avatars"
 }

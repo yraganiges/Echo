@@ -3,14 +3,18 @@ from tkinter import (
     CENTER,
     Label
 )
+from typing import Tuple
+
+from pyautogui import position
 
 from config import ui_config, paths_config
 
+
 class App(Toplevel):
-    def __init__(self) -> None:
+    def __init__(self, pos_main_window: Tuple[int]) -> None:
         super().__init__()
         self.title(ui_config["title"] + " - Настройки")
-        self.geometry("1200x800")
+        self.geometry(f"1200x800+{pos_main_window[0]}+{pos_main_window[1]}")
         self.configure(bg = ui_config["window_color"])
         self.resizable(1, 1)
     

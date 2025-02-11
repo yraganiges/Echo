@@ -205,10 +205,10 @@ class Server(object):
             self.server_run_status = False
         else:
             while self.server_run_status:
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.1)
             
 if __name__ == "__main__":
-    srv = Server("127.0.0.1", 50) 
+    srv = Server("26.61.8.55", 50) 
     asyncio.run(srv.run(300))
     Thread(daemon = True, target = srv.listen).start()
     

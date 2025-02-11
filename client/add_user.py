@@ -60,6 +60,9 @@ class App(Tk):
             self.client.add_contact(self.self_id, user_id)
             self.destroy()
             
+            self.main_app = main.App(self.self_id)
+            try: self.main_app.close_main_window()
+            except: pass
             self.main_app.main()
             
         
