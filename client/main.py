@@ -42,7 +42,6 @@ class App(object):
         self.buttons_control = []
         self.btn_control_status = False
         
-        
         self.x, self.y = 0.13, 0.1
         
         
@@ -152,7 +151,7 @@ class App(object):
             if user_data[1] not in self.added_users:        
                 try:
                     image_ui = Image.open(f'{paths_config["ui_components_folder"]}\\RoundedLabel_2.png')
-                    image_ui = image_ui.resize((245, 70), Image.ANTIALIAS)  # Увеличение размера для теста
+                    image_ui = image_ui.resize((245, 70))  # Увеличение размера для теста
                     self.rounded_label = ImageTk.PhotoImage(image_ui)
                     self.images.append(self.rounded_label)
                     
@@ -200,7 +199,7 @@ class App(object):
                                 target = self.receiving_messages,
                                 args=(event.widget["text"],)
                             ).start(),
-                            self.stop_receiving_messages(),
+                            # self.stop_receiving_messages(),
                             # Thread(target = self.stop_receiving_messages).start(),
                         )
                     )
@@ -210,7 +209,7 @@ class App(object):
                     #Открываем директорию с аватарами
                     try:
                         image = Image.open(avatar_path)
-                        image = image.resize((40, 40), Image.ANTIALIAS)  # Увеличение размера для теста
+                        image = image.resize((40, 40))  # Увеличение размера для теста
                         self.avatar = ImageTk.PhotoImage(image)
                         self.images.append(self.avatar)
                     except:
@@ -225,7 +224,7 @@ class App(object):
                     
                     #кнопка управления
                     img_control = Image.open(f'{paths_config["ui_components_folder"]}\\setting.png')
-                    img_control = img_control.resize((60, 60), Image.ANTIALIAS)  # Увеличение размера для теста
+                    img_control = img_control.resize((60, 60))  # Увеличение размера для теста
                     self.control_ui = ImageTk.PhotoImage(img_control)
                     
                     self.btn_control = Button(
@@ -304,7 +303,7 @@ class App(object):
         #аватар пользователя
         try:
             img_logo = Image.open(f'{paths_config["user_avatars_folder"]}\\{user_data[1]}.png')
-            img_logo = img_logo.resize((120, 120), Image.ANTIALIAS) 
+            img_logo = img_logo.resize((120, 120)) 
             self.img_logo = ImageTk.PhotoImage(img_logo)
         except:
             pass
@@ -401,15 +400,18 @@ class App(object):
         self.user_description.place(relx = 0.85, rely = 0.47, anchor = CENTER)
        
     def stop_receiving_messages(self) -> None:
-        self.stop_event.set()  # Устанавливаем флаг остановки
+        self.stop_event.clear() # Устанавливаем флаг остановки
+        # self.stop_event.set()
         self.is_checking_messages = False       
        
     def receiving_messages(self, user_id: str) -> None:
         print(1111111111)
         self.is_checking_messages = True
         
+        self.stop_event.set()
         self.stop_event.clear() #Сбрасываем флаг остановки
         self.stop_event.clear()
+        
         print(self.is_checking_messages, not self.stop_event.is_set())
         print((self.is_checking_messages) and (not(self.stop_event.is_set())))
     
@@ -447,7 +449,7 @@ class App(object):
                 self.stop_event.set()
                 break
             
-            sleep(2)
+            sleep(0.3)
         else:
             print("Loop is not started!")
             Thread(
@@ -456,9 +458,9 @@ class App(object):
                 args=(user_id,)
             ).start(),
             
-            
+        print("TRUE is closed")   
         self.is_checking_messages = False 
-        self.stop_event.set()
+        self.stop_event.clear()
                 
     def window_add_user(self, event) -> None:
         # self.root.destroy()

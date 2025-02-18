@@ -88,7 +88,7 @@ class Rounded_Button(Canvas):
         # Если указан путь к изображению, загружаем его и изменяем размер
         if image_path:
             original_image = Image.open(image_path)  # Открываем изображение с помощью Pillow
-            resized_image = original_image.resize(image_size, Image.ANTIALIAS)  # Изменяем размер изображения
+            resized_image = original_image.resize(image_size)  # Изменяем размер изображения
             self.image = ImageTk.PhotoImage(resized_image)  # Преобразуем в PhotoImage для Tkinter
             self.create_image(width / 2, height / 2, image=self.image)  # Размещение изображения в центре кнопки
         
