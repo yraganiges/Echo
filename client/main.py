@@ -559,7 +559,7 @@ class App(object):
         self.entry_message.place(relx = 0.475, rely = 0.95, anchor = CENTER)
         
         img_send_message = Image.open(f'{paths_config["ui_components_folder"]}\\send_message.png')
-        img_send_message = img_send_message.resize((30, 30), Image.ANTIALIAS)
+        img_send_message = img_send_message.resize((30, 30))
         self.img_send_message = ImageTk.PhotoImage(img_send_message)
         # self.images.append(self.avatar)
         
