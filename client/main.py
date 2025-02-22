@@ -14,6 +14,7 @@ from client_requests import Client
 from databaser import Database
 from handlers import make_indents
 
+from call import PairCall
 import add_user
 import settings
 
@@ -345,6 +346,10 @@ class App(object):
         )
         self.txt_nickname_rp.place(relx = 0.89, rely = 0.28, anchor = CENTER)
         
+        users_in_call = [self.self_user_id, user_data[1]]
+        users_in_call.sort()
+        print(user_data[1])
+        
         #buttons control user
         self.btn_call = Rounded_Button(
             self.root,
@@ -352,7 +357,8 @@ class App(object):
             radius = 10,
             bg = "#14a859", fg = "gray9",
             image_path = f'{paths_config["ui_components_folder"]}\\call.png',
-            image_size = (60, 50)
+            image_size = (60, 50),
+            command_func = lambda event: self.window_pair_call(users_in_call)
         )
         self.btn_call.place(relx = 0.83, rely = 0.35, anchor = CENTER)
         
@@ -465,6 +471,10 @@ class App(object):
     def window_add_user(self, event) -> None:
         # self.root.destroy()
         add_user.App(self.self_user_id).main() #run file
+        
+    def window_pair_call(self, users_id: List[str]) -> None:
+        self.pair_call = PairCall(users_id)
+        Thread(daemon = True, target = self.pair_call.main).start() #run window
             
     def open_chat_user(self, user_id: str) -> None:
         chat_data = self.client.get_chat(self.self_user_id, user_id)
@@ -636,10 +646,10 @@ class App(object):
 if __name__ == "__main__": 
     # App("dzyg0n546z58854o").main()
     
-    Thread(target = App("dzyg0n546z58854o").main()) #test11
+    # Thread(target = App("dzyg0n546z58854o").main()) #test11
     # Thread(target = App("f72b2z06j94x0xm8").main()) #Коклеш
     # Thread(target = App("ego07n52hx2u7q5m").main()) #пiпiдастр
-    # Thread(target = App("ei3284i0wuyw24o2").main()) #Волтер Уайт
+    Thread(target = App("ei3284i0wuyw24o2").main()) #Волтер Уайт
     # Thread(target = App("bbx90n9it00b0vgs").main()) 
     
     
