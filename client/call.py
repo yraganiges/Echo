@@ -151,7 +151,6 @@ class PairCall(Toplevel):
                 image = image.resize((45, 45))  # Увеличение размера для теста
                 avatar = ImageTk.PhotoImage(image)
                 self.images.append(avatar)
-            
 
                 self.avatar_label = Label(
                     self,
@@ -164,7 +163,7 @@ class PairCall(Toplevel):
             #nickname
             self.txt_nickname = Label(
                 self,
-                text=user_data[0],
+                text=(" "*(len(user_data[0]) // 2)) + user_data[0],
                 bg="gray12", fg="white",
                 font=(ui_config["fonts"][0], 12)
             )

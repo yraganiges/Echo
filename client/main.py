@@ -260,6 +260,22 @@ class App(object):
 
                 except Exception as e:
                     print(f"Error loading image {avatar_path}: {e}")
+                    
+        #кнопка добавить контакт
+        self.btn_add_contact = Rounded_Button(
+            self.root,
+            text = "Добавить контакт",
+            width = 235, height = 60,
+            back_color = "gray12",
+            bg = "gray9", fg = "white",
+            size = 9,
+            command_func = self.window_add_user
+        )
+        self.btn_add_contact.place(relx = self.x, rely = self.y + 0.01, anchor = CENTER)
+        
+        self.contact_labels.append(self.btn_add_contact)
+        
+        # self.contact_labels.append(self.btn_add_contact)
     
     #информация о контакте
     def load_contact_info(self, user_id: str) -> None:
