@@ -35,6 +35,8 @@ class CallServer:
             except ConnectionAbortedError:
                 print("Клиент отключился.")
                 break
+            except:
+                break
             
         # Удаляем клиентов из списка после завершения передачи данных
         self.remove_client(source)

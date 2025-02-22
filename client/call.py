@@ -14,60 +14,72 @@ class VoiceCall:
         self.p = pyaudio.PyAudio()
         self.stream = None
         self.conn = None
+        self.is_calling = False  # Флаг для управления состоянием звонка
 
     def start_call(self):
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.conn.connect((app_config["IP"], 52))
+        self.conn.connect((app_config["IP"], 52))  # Подключение к серверу
         self.stream = self.p.open(format=pyaudio.paInt16,
                                  channels=2,
                                  rate=44100,
                                  input=True,
-                                 output=True)
-        threading.Thread(target=self.play_audio).start()
-        threading.Thread(target=self.record_audio).start()
+                                 output=True,
+                                 frames_per_buffer=1024)
+        
+        self.is_calling = True
+        threading.Thread(target=self.play_audio).start()  # Поток для воспроизведения аудио
+        threading.Thread(target=self.record_audio).start()  # Поток для записи аудио
 
     def play_audio(self):
-        while True:
+        while self.is_calling:
             try:
-                data = self.conn.recv(1024)
+                data = self.conn.recv(1024)  # Получаем данные от собеседника
                 if not data:
                     break
-                self.stream.write(data)
+                self.stream.write(data)  # Воспроизводим данные
             except ConnectionResetError:
                 print("Соединение с сервером разорвано.")
-                self.conn.close()
+                self.end_call()
+                break
+            except Exception as e:
+                print(f"Ошибка при воспроизведении аудио: {e}")
                 break
 
     def record_audio(self):
-        while True:
+        while self.is_calling:
             try:
-                data = self.stream.read(1024)
-                self.conn.sendall(data)
+                data = self.stream.read(1024)  # Записываем аудио с микрофона
+                self.conn.sendall(data)  # Отправляем данные собеседнику
             except ConnectionResetError:
                 print("Соединение с сервером разорвано.")
-                self.conn.close()
+                self.end_call()
                 break
-            except:
-                pass
+            except Exception as e:
+                print(f"Ошибка при записи аудио: {e}")
+                break
 
     def end_call(self):
+        self.is_calling = False  # Останавливаем потоки
         if self.stream:
             self.stream.stop_stream()
             self.stream.close()
         if self.conn:
             self.conn.close()
         self.p.terminate()
+        print("Звонок завершен.")
 
 
 class PairCall(Toplevel):
-    def __init__(self, users_id: List[str]) -> None:
+    def __init__(self, users_id: List[str], self_id: str) -> None:
         super().__init__()
         self.title(ui_config["title"])
         self.geometry("450x600")
         self.configure(bg=ui_config["window_color"])
         self.resizable(0, 0)
+        self.protocol("WM_DELETE_WINDOW", lambda: self.end_call(None))
         
         self.users_in_call = users_id
+        self.self_id = self_id 
         self.client = Client(IP=app_config["IP"], port=app_config["Port"])
         self.voice_call = VoiceCall()
         
@@ -78,23 +90,51 @@ class PairCall(Toplevel):
         except: pass
         
         # Добавление кнопок для управления звонком
-        self.start_button = Rounded_Button(self, text="Start Call", command_func=self.start_call)
-        self.start_button.place(relx=0.3, rely=0.9, anchor=CENTER)
+        self.start_button = Rounded_Button(
+            self,
+            text = "",
+            image_size = (60, 60),
+            image_path = f"{paths_config['ui_components_folder']}\\make_call.png",
+            command_func = self.start_call,
+            bg = ui_config["window_color"], back_color = ui_config["window_color"]
+        )
+        self.start_button.place(relx=0.35, rely=0.9, anchor=CENTER)
         
-        self.end_button = Rounded_Button(self, text="End Call", command_func=self.end_call)
-        self.end_button.place(relx=0.7, rely=0.9, anchor=CENTER)
+        self.end_button = Rounded_Button(
+            self,
+            text = "",
+            image_size = (60, 60),
+            image_path = f"{paths_config['ui_components_folder']}\\missed_call.png",
+            command_func = self.end_call,
+            bg = ui_config["window_color"], back_color = ui_config["window_color"]
+        )
+        self.end_button.place(relx=0.65, rely=0.9, anchor=CENTER)
         
     def start_call(self, event):
         self.voice_call.start_call()
         
     def end_call(self, event):
         self.voice_call.end_call()
+        self.destroy()
         
     def show_users_handler(self) -> None:
         for index in self.users_in_call[0:2]:
             user_data = self.client.get_data_user(user_id=index)
-            print(user_data)
             
+            receiver_index = 1 - self.users_in_call.index(self.self_id)
+            
+            if self.users_in_call[receiver_index] == user_data[1]:
+                self.txt = Label(
+                    self,
+                    text = f"Звонок с {user_data[0]}",
+                    bg = ui_config["window_color"], fg = "white",
+                    font = (
+                        ui_config["fonts"][0],
+                        12
+                    )
+                )
+                self.txt.place(relx = 0.5, rely = 0.12, anchor = CENTER)
+                
             self.rounded_label = Rounded_Button(
                 self,
                 text="",
@@ -137,4 +177,4 @@ class PairCall(Toplevel):
         self.mainloop()
         
 if __name__ == "__main__":
-    PairCall(["dzyg0n546z58854o", "f72b2z06j94x0xm8"]).main()
+    PairCall(["dzyg0n546z58854o", "f72b2z06j94x0xm8"], "dzyg0n546z58854o").main()

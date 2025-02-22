@@ -358,7 +358,10 @@ class App(object):
             bg = "#14a859", fg = "gray9",
             image_path = f'{paths_config["ui_components_folder"]}\\call.png',
             image_size = (60, 50),
-            command_func = lambda event: self.window_pair_call(users_in_call)
+            command_func = lambda event: self.window_pair_call(
+                users_in_call,
+                self.self_user_id
+            )
         )
         self.btn_call.place(relx = 0.83, rely = 0.35, anchor = CENTER)
         
@@ -472,8 +475,8 @@ class App(object):
         # self.root.destroy()
         add_user.App(self.self_user_id).main() #run file
         
-    def window_pair_call(self, users_id: List[str]) -> None:
-        self.pair_call = PairCall(users_id)
+    def window_pair_call(self, users_id: List[str], self_id: str) -> None:
+        self.pair_call = PairCall(users_id, self_id)
         Thread(daemon = True, target = self.pair_call.main).start() #run window
             
     def open_chat_user(self, user_id: str) -> None:
@@ -646,10 +649,10 @@ class App(object):
 if __name__ == "__main__": 
     # App("dzyg0n546z58854o").main()
     
-    # Thread(target = App("dzyg0n546z58854o").main()) #test11
+    Thread(target = App("dzyg0n546z58854o").main()) #test11
     # Thread(target = App("f72b2z06j94x0xm8").main()) #Коклеш
     # Thread(target = App("ego07n52hx2u7q5m").main()) #пiпiдастр
-    Thread(target = App("ei3284i0wuyw24o2").main()) #Волтер Уайт
+    # Thread(target = App("ei3284i0wuyw24o2").main()) #Волтер Уайт
     # Thread(target = App("bbx90n9it00b0vgs").main()) 
     
     
