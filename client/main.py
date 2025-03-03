@@ -8,15 +8,20 @@ from PIL import Image, ImageTk
 from datetime import datetime
 from typing import List, Any
 from time import sleep
+from pygame import mixer
+from pyperclip import copy
 
 from config import ui_config, app_config, paths_config
 from client_requests import Client
 from databaser import Database
 from handlers import make_indents
+from message_analyzer import is_remind_message
 
 from call import PairCall
 import add_user
 import settings
+import connect_error_win
+import remind_messages_win
 
 import os
 
@@ -37,10 +42,13 @@ class App(object):
         self.stop_event = Event()
         self.self_user_id = user_id
         
+        mixer.init()
+        
         self.images = []
         self.added_users = []
-        self.contact_labels = []
+        self.contact_labels: List[Label] = []
         self.buttons_control = []
+        self.remind_messages = []
         self.btn_control_status = False
         
         self.x, self.y = 0.13, 0.1
@@ -86,7 +94,20 @@ class App(object):
             )
             self.btn_control.place(relx = 0.027, rely = 0.075, anchor = CENTER)
             
-            self.y = 0.1
+            self.y = 0
+            
+    def scroll_contacts(self, event) -> None:
+        if event.delta > 0: #вверх
+            self.y += 0.08
+        else: #вниз
+            self.y -= 0.08
+        
+        if len(self.contact_labels) > 0:
+            # print(self.contact_labels)
+            for index in self.contact_labels:
+                print(index)
+                index.place(relx = self.x, rely = self.y, anchor = CENTER)
+                    
         
     def contacts_handler(self) -> None:
         #Проверяем, были ли вскрыты контакты
@@ -110,16 +131,23 @@ class App(object):
             self.txt.place(relx = 0.55, rely = 0.385, anchor = CENTER)
             
             #2-й текст
-            self.txt = Label(
+            self.txt_id = Label(
                 self.root,
-                text = f"Ваш id: {self.self_user_id} \nс помощью него вас смогут добавить в друзья",
+                text = f"Ваш id: {self.self_user_id} \nс помощью него вас смогут добавить в друзья\nнажмите на этот текст, чтобы скопировать id",
                 bg = "gray7", fg = "gray16",
                 font = (
                     ui_config["fonts"][0],
                     15
                 )
             )
-            self.txt.place(relx = 0.55, rely = 0.45, anchor = CENTER)
+            self.txt_id.place(relx = 0.55, rely = 0.45, anchor = CENTER)
+            self.txt_id.bind("<Button - 1>", lambda event: copy(text = self.self_user_id))
+            self.txt_id.bind("<Enter>", lambda event: self.txt_id.configure(
+                font = (ui_config["fonts"][0], 15, "underline") #ставим андерлайн
+            ))
+            self.txt_id.bind("<Leave>", lambda event: self.txt_id.configure(
+                font = (ui_config["fonts"][0], 15) #убираем андерлайн
+            ))
             
             #кнопка добавить контакт
             self.btn_add_contact = Rounded_Button(
@@ -134,10 +162,19 @@ class App(object):
             self.btn_add_contact.place(relx = 0.55, rely = 0.55, anchor = CENTER)
             
             return 
-             
+         
+        self.x, self.y = 0.13, 0.1    
         for index in contacts_data:
             user_data = self.client.get_data_user(index[0])
             print(user_data)
+            
+            try:
+                if user_data[0:13] == "connect_error":
+                    self.root.destroy()
+                    connect_error_win.App().main()
+                    break
+            except:
+                pass
 
             avatar_path = f'{paths_config["user_avatars_folder"]}\\{user_data[1]}.png'
             
@@ -186,7 +223,7 @@ class App(object):
                     )
                     self.txt_last_message.place(relx = self.x - 0.01, rely = self.y + 0.017, anchor = CENTER)
 
-                    
+                    self.lbl.bind("<MouseWheel>", lambda event: self.scroll_contacts(event))
                     self.lbl.bind("<Enter>", lambda event: event.widget.configure(bg="gray10"))
                     self.lbl.bind("<Leave>", lambda event: event.widget.configure(bg="#1e1f1e"))
                     self.lbl.bind(
@@ -267,7 +304,7 @@ class App(object):
             text = "Добавить контакт",
             width = 235, height = 60,
             back_color = "gray12",
-            bg = "gray9", fg = "white",
+            bg = "#0f120e", fg = "white",
             size = 9,
             command_func = self.window_add_user
         )
@@ -423,6 +460,20 @@ class App(object):
             )
         )
         self.user_description.place(relx = 0.85, rely = 0.47, anchor = CENTER)
+        
+        #Посмотреть важные сообщения
+        self.see_remind_messages = Rounded_Button(
+                self.root,
+                text = "Важные упоминания",
+                width = 200, height = 60,
+                back_color = "gray7",
+                bg = ui_config["main_color"], fg = "white",
+                size = 11,
+                command_func = lambda event: remind_messages_win.App(
+                    self.remind_messages
+                ).main()
+            )
+        self.see_remind_messages.place(relx = 0.89, rely = 0.5 + (len(user_data) / 100), anchor = CENTER)
        
     def stop_receiving_messages(self) -> None:
         self.stop_event.clear() # Устанавливаем флаг остановки
@@ -431,6 +482,7 @@ class App(object):
        
     def receiving_messages(self, user_id: str) -> None:
         print(1111111111)
+        # self.remind_messages = []
         self.is_checking_messages = True
         
         self.stop_event.set()
@@ -458,15 +510,22 @@ class App(object):
                 
                 #проверяем время и никнейм
                 if self.server_chat[-1][2] != self.chat[-2][1:-1] and self_nickname != user_nickname: 
-                    info = f"\n\n<{self.server_chat[-1][2]}>\n{user_nickname}: {self.server_chat[-1][0]}"
-                
-                    self.chat_display.insert(
-                        END, info,
-                        "you" if self.server_chat[-1][3] == self.self_user_id else "interlocutor"
+                    
+                    self.show_message(
+                        message_data = [
+                            self.server_chat[-1][0], #data message
+                            "text", #type message
+                            self.server_chat[-1][2], #time send message
+                            self.server_chat[-1][3], #sender id
+                            self.server_chat[-1][4] #receiver id
+                        ],
+                        receiver_nickname = user_nickname
                     )
                     
-                    self.chat_display.tag_config("you", foreground = ui_config["self_messages_color"])
-                    self.chat_display.tag_config("interlocutor", foreground = ui_config["interlocutor_messages_color"])
+                    #звук уведомления
+                    mixer.music.load(f"{paths_config['sounds_folder']}\\notice.mp3")
+                    mixer.music.play()
+                    
                     self.chat_display.see(END) #Прокручиваем к концу
                        
             except:
@@ -493,9 +552,33 @@ class App(object):
         
     def window_pair_call(self, users_id: List[str], self_id: str) -> None:
         self.pair_call = PairCall(users_id, self_id)
-        Thread(daemon = True, target = self.pair_call.main).start() #run window
+        self.pair_call.main() #run window
+    
+    def show_message(self, message_data: List[Any], receiver_nickname: str) -> None:
+        info = f"\n\n<{str(message_data[2])}>\n"
+        if message_data[3] == self.self_user_id:
+            info += "Вы: "
+        else:
+            info += receiver_nickname + ": "
+        
+        info += str(message_data[0]).strip() #добавляем сообщение пользователя
+        
+        self.chat_display.insert(
+            END, info,
+            "you" if message_data[3] == self.self_user_id else "interlocutor"
+        )
+        
+        if is_remind_message(message_data[0]):
+            #Тег напоминания
+            self.remind_messages.append(info)
+            self.chat_display.tag_add("remind","end-1c linestart", "end-1c lineend")
+        
+        self.chat_display.tag_config("you", foreground = ui_config["self_messages_color"])
+        self.chat_display.tag_config("interlocutor", foreground = ui_config["interlocutor_messages_color"])
+        self.chat_display.tag_config("remind", background=ui_config["remind_message_color"])
             
     def open_chat_user(self, user_id: str) -> None:
+        self.remind_messages = []
         chat_data = self.client.get_chat(self.self_user_id, user_id)
         
         try:
@@ -520,24 +603,13 @@ class App(object):
         self.chat_display.place(relx = 0.5, rely = 0.48, anchor = CENTER)
         
         if chat_data != None:
-            sender_nickname = self.client.get_data_user(chat_data[0][3])[0]
+            receiver_nickname = self.client.get_data_user(user_id = chat_data[0][3])[0]
             for index in chat_data:
-                
-                info = f"\n\n<{str(index[2])}>\n"
-                if index[3] == self.self_user_id:
-                    info += "Вы: "
-                else:
-                    info += sender_nickname + ": "
-                
-                info += str(index[0]).strip() #добавляем сообщение пользователя
-                
-                self.chat_display.insert(
-                    END, info,
-                    "you" if index[3] == self.self_user_id else "interlocutor"
+                self.show_message(
+                    message_data = index,
+                    receiver_nickname = receiver_nickname
                 )
-                
-            self.chat_display.tag_config("you", foreground = ui_config["self_messages_color"])
-            self.chat_display.tag_config("interlocutor", foreground = ui_config["interlocutor_messages_color"])
+            
             self.chat_display.see(END) #Прокручиваем к концу
         
 
@@ -634,12 +706,14 @@ class App(object):
         self.title_label.place(relx = 0.018, rely = 0.01, anchor = CENTER)
         
         #users field
-        Label(
+        self.users_field = Label(
             self.root,
             width = 40,
             height = 200,
             bg = "#1e1f1e"
-        ).place(relx = 0.12, rely = 0.5, anchor = CENTER)
+        )
+        self.users_field.place(relx = 0.12, rely = 0.5, anchor = CENTER)
+        self.users_field.bind("<MouseWheel>", lambda event: self.scroll_contacts(event))
         
         #channels field
         Label(
@@ -665,10 +739,11 @@ class App(object):
 if __name__ == "__main__": 
     # App("dzyg0n546z58854o").main()
     
-    Thread(target = App("dzyg0n546z58854o").main()) #test11
+    # Thread(target = App("dzyg0n546z58854o").main()) #test1
     # Thread(target = App("f72b2z06j94x0xm8").main()) #Коклеш
     # Thread(target = App("ego07n52hx2u7q5m").main()) #пiпiдастр
-    # Thread(target = App("ei3284i0wuyw24o2").main()) #Волтер Уайт
+    Thread(target = App("ei3284i0wuyw24o2").main()) #Волтер Уайт
     # Thread(target = App("bbx90n9it00b0vgs").main()) 
-    
+    # Thread(target = App("le5t0585jehi4933").main()) #Кисловодск
+    # Thread(target = App("zmlg96hihvydn6kl").main()) 
     

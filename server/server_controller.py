@@ -258,11 +258,11 @@ class Server(object):
                 await asyncio.sleep(0.1)
             
 if __name__ == "__main__":
-    # srv = Server("26.61.8.55", 50) 
-    # asyncio.run(srv.run(300))
-    # Thread(daemon = True, target = srv.listen).start()
+    srv = Server("26.61.8.55", 50) 
+    asyncio.run(srv.run(300))
+    Thread(daemon = True, target = srv.listen).start()
     
-    srv = CallServer("26.61.8.55", 52)
-    srv.start_server()
+    # srv = CallServer("26.61.8.55", 52)
+    # srv.start_server()
     
         

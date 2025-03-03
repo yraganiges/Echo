@@ -79,25 +79,37 @@
 # # Запускаем главный цикл
 # root.mainloop()
 
+
 import tkinter as tk
 from tkinter import scrolledtext
 
-def get_text():
-    # Получаем текст из ScrolledText
-    text = scrolled_text.get("1.0", tk.END)  # Получаем текст с первой строки до конца
-    print(text.rstrip().split("\n"))
+def on_mouse_wheel(event):
+    # Прокрутка вверх или вниз в зависимости от направления колеса
+    if event.delta > 0:
+        print("Прокрутка вверх")
+        text.yview_scroll(-1, "units")  # Прокрутка вверх
+    else:
+        print("Прокрутка вниз")
+        text.yview_scroll(1, "units")   # Прокрутка вниз
 
 # Создаем главное окно
 root = tk.Tk()
-root.title("ScrolledText Example")
+root.title("Прокрутка с помощью колеса мыши")
 
-# Создаем ScrolledText
-scrolled_text = scrolledtext.ScrolledText(root, width=40, height=10)
-scrolled_text.pack()
+# Создаем текстовое поле с прокруткой
+text = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=40, height=10)
+text.pack(pady=10)
 
-# Кнопка для получения текста
-get_text_button = tk.Button(root, text="Получить текст", command=get_text)
-get_text_button.pack()
+# Добавляем текст для демонстрации прокрутки
+for i in range(1, 101):
+    text.insert(tk.END, f"Строка {i}\n")
+
+# Привязываем событие колеса мыши к функции прокрутки
+root.bind("<MouseWheel>", on_mouse_wheel)  # Для Windows и Mac
+
+# Для Linux используем другое событие
+root.bind("<Button-4>", lambda event: text.yview_scroll(-1, "units"))  # Прокрутка вверх
+root.bind("<Button-5>", lambda event: text.yview_scroll(1, "units"))   # Прокрутка вниз
 
 # Запускаем главный цикл
 root.mainloop()
