@@ -108,7 +108,9 @@ class App(object):
                 print(index)
                 index.place(relx = self.x, rely = self.y, anchor = CENTER)
                     
-        
+    def cursor_on_win(self) -> bool | None:
+        return True
+    
     def contacts_handler(self) -> None:
         #Проверяем, были ли вскрыты контакты
         if self.contact_labels == []:
@@ -479,7 +481,7 @@ class App(object):
         self.stop_event.clear() # Устанавливаем флаг остановки
         # self.stop_event.set()
         self.is_checking_messages = False       
-       
+     
     def receiving_messages(self, user_id: str) -> None:
         print(1111111111)
         # self.remind_messages = []
@@ -553,6 +555,17 @@ class App(object):
     def window_pair_call(self, users_id: List[str], self_id: str) -> None:
         self.pair_call = PairCall(users_id, self_id)
         self.pair_call.main() #run window
+    
+    def show_image(self, image_data: List[Any], receiver_nickname: str) -> None:
+        info = f"\n\n<{str(image_data[3])}>\n"
+        
+        if image_data[1] == self.self_user_id:
+            info += "Вы: "
+        else:
+            info += receiver_nickname + ": "
+           
+        #TODO Дописать эту часть кода 
+        ...
     
     def show_message(self, message_data: List[Any], receiver_nickname: str) -> None:
         info = f"\n\n<{str(message_data[2])}>\n"
@@ -656,10 +669,12 @@ class App(object):
             self.root,
             image = self.img_send_message,
             bg = "gray32", bd = 0,
-            command = lambda: self.send_text_message(
+            command = lambda: (self.send_text_message(
                 message = self.entry_message.get(),
                 sender_id = self.self_user_id,
                 receiver_id = user_id
+            ),
+            self.entry_message.delete(0, END) #очищаем поле после отправки сообщения
             )
         )
         self.btn_send_message.place(relx = 0.75, rely = 0.95, anchor = CENTER)
@@ -669,6 +684,7 @@ class App(object):
         self.btn_send_message.bind(
             "<Leave>", lambda event: self.btn_send_message.configure(bg = "gray32")
         )
+    
             
     def send_text_message(self, message: str, sender_id: str, receiver_id: str) -> None:
         now_time = datetime.now().strftime("%H:%M:%S %Y-%m-%d")
@@ -682,16 +698,22 @@ class App(object):
             "time_send_message": now_time,
             "to_whom_message": receiver_id
         }   
-
+            
         self.client.send_message(message_data, "text")
         self.chat_display.insert(
             END, 
             f"\n\n<{now_time}>\nВы: {message}",
             "you",
         ) #добавляем сообщение в чат дисплей
+        
+        #тег упоминания
+        if is_remind_message(message_data["message"]):
+            self.chat_display.tag_add("remind","end-1c linestart", "end-1c lineend")
+            
+        self.chat_display.tag_config("remind", background=ui_config["remind_message_color"])
         self.chat_display.see(END)
         
-        #удаляем текст о начале переписки, если оно имелось
+        #удаляем текст о начале переписки, если он имелся
         try: self.txt_not_chat.destroy() 
         except: pass
     
@@ -733,17 +755,22 @@ class App(object):
         
     def main(self) -> None:
         self.build()
+        # Устанавливаем кнопку по умолчанию (срабатывает при нажатии Enter)
+        self.root.bind(
+            "<Return>",
+            lambda event: self.btn_send_message.invoke()
+        )
         self.contacts_handler()
         self.root.mainloop()
         
 if __name__ == "__main__": 
     # App("dzyg0n546z58854o").main()
     
-    # Thread(target = App("dzyg0n546z58854o").main()) #test1
-    # Thread(target = App("f72b2z06j94x0xm8").main()) #Коклеш
+    # Thread(target = App("n657py11gx30redy").main()) #test1
+    Thread(target = App("n9j4sv3lv6f378v9").main()) #Коклеш
     # Thread(target = App("ego07n52hx2u7q5m").main()) #пiпiдастр
-    Thread(target = App("ei3284i0wuyw24o2").main()) #Волтер Уайт
+    # Thread(target = App("ei3284i0wuyw24o2").main()) #Волтер Уайт
     # Thread(target = App("bbx90n9it00b0vgs").main()) 
     # Thread(target = App("le5t0585jehi4933").main()) #Кисловодск
-    # Thread(target = App("zmlg96hihvydn6kl").main()) 
+    # Thread(target = App("zmlg96hihvydn6kl").main()) #Ram TRX 1500 
     

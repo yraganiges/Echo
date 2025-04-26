@@ -100,55 +100,55 @@
 #     chat_app = ChatApp(root)
 #     root.mainloop()
 
-import tkinter as tk
-from tkinter import scrolledtext, messagebox
+# import tkinter as tk
+# from tkinter import scrolledtext, messagebox
 
-class ChatApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Чат")
+# class ChatApp:
+#     def __init__(self, root):
+#         self.root = root
+#         self.root.title("Чат")
 
-        # Создаем ScrolledText для отображения сообщений
-        self.text_area = scrolledtext.ScrolledText(self.root, width=50, height=20)
-        self.text_area.pack(padx=10, pady=10)
-        self.text_area.bind("<Button-3>", self.delete_message)  # ПКМ для удаления сообщения
-        self.text_area.bind("<Motion>", self.on_mouse_move)  # Наведение мыши
-        self.text_area.bind("<Leave>", self.on_mouse_leave)  # Уход мыши
+#         # Создаем ScrolledText для отображения сообщений
+#         self.text_area = scrolledtext.ScrolledText(self.root, width=50, height=20)
+#         self.text_area.pack(padx=10, pady=10)
+#         self.text_area.bind("<Button-3>", self.delete_message)  # ПКМ для удаления сообщения
+#         self.text_area.bind("<Motion>", self.on_mouse_move)  # Наведение мыши
+#         self.text_area.bind("<Leave>", self.on_mouse_leave)  # Уход мыши
 
-        # Создаем поле ввода для новых сообщений
-        self.entry = tk.Entry(self.root, width=50)
-        self.entry.pack(padx=10, pady=10)
-        self.entry.bind("<Return>", self.send_message)  # Отправка сообщения по нажатию Enter
+#         # Создаем поле ввода для новых сообщений
+#         self.entry = tk.Entry(self.root, width=50)
+#         self.entry.pack(padx=10, pady=10)
+#         self.entry.bind("<Return>", self.send_message)  # Отправка сообщения по нажатию Enter
 
-    def send_message(self, event):
-        message = self.entry.get()
-        if message:
-            self.text_area.insert(tk.END, message + "\n")
-            self.entry.delete(0, tk.END)
+#     def send_message(self, event):
+#         message = self.entry.get()
+#         if message:
+#             self.text_area.insert(tk.END, message + "\n")
+#             self.entry.delete(0, tk.END)
 
-    def delete_message(self, event):
-        try:
-            index = self.text_area.index("@%s,%s" % (event.x, event.y))
-            line = int(index.split('.')[0])  # Получаем номер строки
-            self.text_area.delete(f"{line}.0", f"{line}.end")
-        except Exception as e:
-            messagebox.showerror("Ошибка", "Не удалось удалить сообщение.")
+#     def delete_message(self, event):
+#         try:
+#             index = self.text_area.index("@%s,%s" % (event.x, event.y))
+#             line = int(index.split('.')[0])  # Получаем номер строки
+#             self.text_area.delete(f"{line}.0", f"{line}.end")
+#         except Exception as e:
+#             messagebox.showerror("Ошибка", "Не удалось удалить сообщение.")
 
-    def on_mouse_move(self, event):
-        index = self.text_area.index("@%s,%s" % (event.x, event.y))
-        line = int(index.split('.')[0])  # Получаем номер строки
-        # Меняем цвет текста на красный при наведении
-        self.text_area.tag_add("hover", f"{line}.0", f"{line}.end")
-        self.text_area.tag_config("hover", foreground="red")
+#     def on_mouse_move(self, event):
+#         index = self.text_area.index("@%s,%s" % (event.x, event.y))
+#         line = int(index.split('.')[0])  # Получаем номер строки
+#         # Меняем цвет текста на красный при наведении
+#         self.text_area.tag_add("hover", f"{line}.0", f"{line}.end")
+#         self.text_area.tag_config("hover", foreground="red")
 
-    def on_mouse_leave(self, event):
-        # Убираем цвет при уходе мыши
-        self.text_area.tag_remove("hover", "1.0", "end")
+#     def on_mouse_leave(self, event):
+#         # Убираем цвет при уходе мыши
+#         self.text_area.tag_remove("hover", "1.0", "end")
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    chat_app = ChatApp(root)
-    root.mainloop()
+# if __name__ == "__main__":
+#     root = tk.Tk()
+#     chat_app = ChatApp(root)
+#     root.mainloop()
     
 
 

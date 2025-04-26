@@ -57,7 +57,8 @@ class App(Tk):
         sleep(1)
         
         if self.txt_add_contact_status[-1] != "!":
-            self.client.add_contact(self.self_id, user_id)
+            self.client.add_contact(self.self_id, user_id) #добавляем контакт у себя
+            self.client.add_contact(user_id, self.self_id) #добавляем наш контанк у собеседника
             self.destroy()
             
             self.main_app = main.App(self.self_id)

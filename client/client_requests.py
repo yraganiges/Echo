@@ -54,7 +54,9 @@ class Client:
         
         data_from_server = (self.server.recv(1024)).decode()
         self.server.close()
-        print(data_from_server)   
+        print(data_from_server)
+        
+    
         
     def get_user_avatar(self, user_id: str) -> None:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -165,6 +167,22 @@ class Client:
             
         if type_message == "text":
             self.server.send((data_handler(data = list_data) + "SEND-TEXT-MESSAGE").encode())
+    
+    def add_group(
+        self,
+        group_id: str,
+        group_name: str,
+        owner_id: str,
+        users_id: List[str] = None,
+    ) -> None:
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        try:
+            self.server.connect((self.IP, self.port))
+        except:
+            return "connect_error" 
+        
+        self.server.send(data_handler([group_id, group_name, owner_id, users_id]).encode())
             
     def add_contact(self, self_id: str, contact_id: str) -> None:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
